@@ -6,6 +6,7 @@ import { OrbitControls, Text } from "@react-three/drei";
 import Particles from "@tsparticles/react";
 import { FaUserAlt } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import { useNavigate } from "react-router-dom";
 
 const PALETTE = {
   lightGreen: "#a8e6a3",
@@ -102,6 +103,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const headingRef = useRef();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!headingRef.current) return;
@@ -127,6 +129,7 @@ export default function Login() {
       return false;
     }
     setError("");
+    navigate("/student");
     return true;
   }
 
