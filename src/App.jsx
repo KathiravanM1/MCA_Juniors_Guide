@@ -11,22 +11,13 @@ import SeniorLanding from "./components/SeniorLanding";
 
 function App() {
   return (
-    <div>
-      <AdminLanding/>
-    </div>
-  );
-}
-
-export default App;
-
-
-function App() {
-  return (
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="signup" element={<Signup />} />
         <Route path="login" element={<Login />} />
+        <Route path="admin" element={<AdminLanding />} />
+        <Route path="senior" element={<SeniorLanding />} />
       </Routes>
     </Router>
   )
