@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const App = () => {
+const Resources = () => {
   const [activeSemester, setActiveSemester] = useState(1);
   const [expandedSubjects, setExpandedSubjects] = useState({});
 
@@ -117,141 +117,23 @@ const App = () => {
             { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-05-15", marks: "50" },
           ]
         },
-        {
-          id: "algorithms",
-          name: "Design and Analysis of Algorithms",
-          code: "MCA202",
-          materials: [
-            { name: "Algorithm Complexity.pdf", type: "pdf", size: "2.9 MB", uploadedBy: "Dr. Patel", date: "2024-02-18" },
-            { name: "Sorting Algorithms.pptx", type: "pptx", size: "2.1 MB", uploadedBy: "Prof. Singh", date: "2024-02-25" },
-          ],
-          questionPapers: [
-            { name: "CA1 Question Paper - 2024.pdf", type: "ca", date: "2024-03-12", marks: "25" },
-            { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-05-18", marks: "50" },
-          ]
-        },
-        {
-          id: "os",
-          name: "Operating Systems",
-          code: "MCA203",
-          materials: [
-            { name: "OS Fundamentals.pdf", type: "pdf", size: "3.2 MB", uploadedBy: "Dr. Gupta", date: "2024-02-16" },
-            { name: "Process Management.pptx", type: "pptx", size: "2.7 MB", uploadedBy: "Prof. Verma", date: "2024-02-22" },
-          ],
-          questionPapers: [
-            { name: "CA1 Question Paper - 2024.pdf", type: "ca", date: "2024-03-08", marks: "25" },
-            { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-05-12", marks: "50" },
-          ]
-        },
-        {
-          id: "web",
-          name: "Web Technologies",
-          code: "MCA204",
-          materials: [
-            { name: "HTML CSS Fundamentals.pdf", type: "pdf", size: "2.4 MB", uploadedBy: "Dr. Agarwal", date: "2024-02-19" },
-            { name: "JavaScript Basics.pptx", type: "pptx", size: "1.9 MB", uploadedBy: "Prof. Jain", date: "2024-02-26" },
-          ],
-          questionPapers: [
-            { name: "CA1 Question Paper - 2024.pdf", type: "ca", date: "2024-03-14", marks: "25" },
-            { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-05-20", marks: "50" },
-          ]
-        },
-        {
-          id: "stats",
-          name: "Statistics and Probability",
-          code: "MCA205",
-          materials: [
-            { name: "Probability Theory.pdf", type: "pdf", size: "3.1 MB", uploadedBy: "Dr. Mehta", date: "2024-02-17" },
-            { name: "Statistical Analysis.pptx", type: "pptx", size: "2.8 MB", uploadedBy: "Prof. Pandey", date: "2024-02-24" },
-          ],
-          questionPapers: [
-            { name: "CA1 Question Paper - 2024.pdf", type: "ca", date: "2024-03-09", marks: "25" },
-            { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-05-16", marks: "50" },
-          ]
-        },
-        {
-          id: "system",
-          name: "System Programming",
-          code: "MCA206",
-          materials: [
-            { name: "Compilers and Interpreters.pdf", type: "pdf", size: "4.1 MB", uploadedBy: "Dr. Rao", date: "2024-02-21" },
-            { name: "Assembly Language.pptx", type: "pptx", size: "3.3 MB", uploadedBy: "Prof. Nair", date: "2024-02-28" },
-          ],
-          questionPapers: [
-            { name: "CA1 Question Paper - 2024.pdf", type: "ca", date: "2024-03-11", marks: "25" },
-            { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-05-14", marks: "50" },
-          ]
-        },
-        {
-          id: "mobile",
-          name: "Mobile Application Development",
-          code: "MCA207",
-          materials: [
-            { name: "Android Development Basics.pdf", type: "pdf", size: "3.6 MB", uploadedBy: "Dr. Reddy", date: "2024-02-23" },
-            { name: "React Native Tutorial.pptx", type: "pptx", size: "2.2 MB", uploadedBy: "Prof. Iyer", date: "2024-03-01" },
-          ],
-          questionPapers: [
-            { name: "CA1 Question Paper - 2024.pdf", type: "ca", date: "2024-03-13", marks: "25" },
-            { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-05-17", marks: "50" },
-          ]
-        },
-        {
-          id: "security",
-          name: "Information Security",
-          code: "MCA208",
-          materials: [
-            { name: "Cryptography Fundamentals.pdf", type: "pdf", size: "2.7 MB", uploadedBy: "Dr. Pillai", date: "2024-02-20" },
-            { name: "Network Security.pptx", type: "pptx", size: "2.4 MB", uploadedBy: "Prof. Menon", date: "2024-02-27" },
-          ],
-          questionPapers: [
-            { name: "CA1 Question Paper - 2024.pdf", type: "ca", date: "2024-03-15", marks: "25" },
-            { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-05-19", marks: "50" },
-          ]
-        },
-        {
-          id: "ai",
-          name: "Artificial Intelligence",
-          code: "MCA209",
-          materials: [
-            { name: "Introduction to AI.pdf", type: "pdf", size: "3.9 MB", uploadedBy: "Dr. Choudhary", date: "2024-02-22" },
-            { name: "Machine Learning Basics.pptx", type: "pptx", size: "3.1 MB", uploadedBy: "Prof. Bansal", date: "2024-03-02" },
-          ],
-          questionPapers: [
-            { name: "CA1 Question Paper - 2024.pdf", type: "ca", date: "2024-03-07", marks: "25" },
-            { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-05-13", marks: "50" },
-          ]
-        }
-      ]
-    },
-    3: {
+      ]},
+        3: {
       name: "Semester 3",
       subjects: [
         {
-          id: "advanced-db",
-          name: "Advanced Database Systems",
-          code: "MCA301",
+          id: "oop",
+          name: "Object Oriented Programming",
+          code: "MCA201",
           materials: [
-            { name: "NoSQL Databases.pdf", type: "pdf", size: "3.4 MB", uploadedBy: "Dr. Krishnan", date: "2024-03-15" },
-            { name: "Database Optimization.pptx", type: "pptx", size: "2.6 MB", uploadedBy: "Prof. Sinha", date: "2024-03-20" },
+            { name: "OOP Concepts in Java.pdf", type: "pdf", size: "3.8 MB", uploadedBy: "Dr. Kumar", date: "2024-02-15" },
+            { name: "Inheritance and Polymorphism.pptx", type: "pptx", size: "2.5 MB", uploadedBy: "Prof. Sharma", date: "2024-02-20" },
           ],
           questionPapers: [
-            { name: "CA1 Question Paper - 2024.pdf", type: "ca", date: "2024-04-10", marks: "25" },
-            { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-06-15", marks: "50" },
+            { name: "CA1 Question Paper - 2024.pdf", type: "ca", date: "2024-03-10", marks: "25" },
+            { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-05-15", marks: "50" },
           ]
         },
-        {
-          id: "cloud",
-          name: "Cloud Computing",
-          code: "MCA302",
-          materials: [
-            { name: "AWS Fundamentals.pdf", type: "pdf", size: "4.2 MB", uploadedBy: "Dr. Joshi", date: "2024-03-18" },
-            { name: "Docker and Kubernetes.pptx", type: "pptx", size: "3.5 MB", uploadedBy: "Prof. Malhotra", date: "2024-03-25" },
-          ],
-          questionPapers: [
-            { name: "CA1 Question Paper - 2024.pdf", type: "ca", date: "2024-04-12", marks: "25" },
-            { name: "End Semester Exam - 2024.pdf", type: "ese", date: "2024-06-18", marks: "50" },
-          ]
-        }
       ]
     }
   };
@@ -283,8 +165,7 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen" style={{ 
-      background: 'linear-gradient(135deg, #ECFAE5 0%, #DDF6D2 100%)',
+    <div className="min-h-screen bg-gradient-to-b from-#DDF6D2 to-white" style={{ 
       fontFamily: 'Space Grotesk, sans-serif'
     }}>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -313,7 +194,7 @@ const App = () => {
               onClick={() => setActiveSemester(parseInt(semId))}
               className={`px-6 py-3 rounded-2xl font-medium transition-all duration-300 shadow-lg ${
                 activeSemester === parseInt(semId)
-                  ? 'bg-green-600 text-white shadow-green-200'
+                  ? 'bg-green-800/80 text-white shadow-green-200'
                   : 'bg-white text-gray-700 hover:bg-green-50 hover:shadow-xl'
               }`}
             >
@@ -440,41 +321,9 @@ const App = () => {
             </div>
           ))}
         </div>
-
-        {/* Stats Footer */}
-        <div className="mt-12 bg-white rounded-3xl p-8 shadow-xl border border-gray-200">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 mb-2">
-                {Object.values(semesterData).reduce((total, sem) => total + sem.subjects.length, 0)}
-              </div>
-              <div className="text-gray-600">Total Subjects</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">
-                {Object.values(semesterData).reduce((total, sem) => 
-                  total + sem.subjects.reduce((subTotal, subject) => subTotal + subject.materials.length, 0), 0
-                )}
-              </div>
-              <div className="text-gray-600">Study Materials</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">
-                {Object.values(semesterData).reduce((total, sem) => 
-                  total + sem.subjects.reduce((subTotal, subject) => subTotal + subject.questionPapers.length, 0), 0
-                )}
-              </div>
-              <div className="text-gray-600">Question Papers</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600 mb-2">3</div>
-              <div className="text-gray-600">Active Semesters</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
 };
 
-export default App;
+export default Resources;

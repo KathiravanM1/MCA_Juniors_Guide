@@ -1,122 +1,298 @@
-import React, { useState } from 'react';
-import { LogOut, Map, FileText, BookOpen, Code, GraduationCap, FolderOpen } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Star, Link as LinkIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Student = () => {
-  const [activeButton, setActiveButton] = useState(null);
-  const navigate = useNavigate();
+// --- CUSTOM HOOK FOR DAILY TOPIC ---
+// This hook now uses a static list to avoid network errors from private APIs.
+const useTodaysTopic = () => {
+    const [topic, setTopic] = useState({ title: 'Loading Topic...', description: 'Please wait a moment.', links: [] });
 
-  const navigationItems = [
-    { id: 'roadmap', label: 'Roadmap', icon: Map },
-    { id: 'question-paper', label: 'Question Paper', icon: FileText },
-    { id: 'materials', label: 'Materials', icon: BookOpen },
-    { id: 'problem-solving', label: 'Problem Solving', icon: Code },
-    { id: 'academics', label: 'Academics', icon: GraduationCap },
-    { id: 'projects', label: 'Projects', icon: FolderOpen }
-  ];
+    // Using a static, memoized list is more reliable than a private/broken API for this component.
+    const topics = useMemo(() => [
+        { 
+            title: 'The Rise of Quantum Computing', 
+            description: 'Quantum computing leverages principles of quantum mechanics to solve problems too complex for classical computers. By using qubits, which can exist in multiple states at once, it promises to revolutionize fields like medicine, materials science, and artificial intelligence.',
+            links: [
+                { name: 'IBM\'s Quantum Explained', url: 'https://www.ibm.com/quantum-computing/what-is-quantum-computing/' },
+                { name: 'A Beginner\'s Guide', url: 'https://www.technologyreview.com/2019/01/29/63419/what-is-quantum-computing/' },
+            ]
+        },
+        { 
+            title: 'Ethical AI and Bias Detection', 
+            description: 'As AI becomes more integrated into our lives, ensuring it operates fairly and without bias is critical. Ethical AI involves developing systems that are transparent, accountable, and aligned with human values, actively working to identify and mitigate harmful biases in data and algorithms.',
+            links: [
+                { name: 'Google\'s AI Principles', url: 'https://ai.google/responsibility/principles/' },
+                { name: 'Understanding AI Bias', url: 'https://www.coursera.org/articles/ai-bias' },
+            ]
+        },
+        { 
+            title: 'The Future of Decentralized Finance (DeFi)', 
+            description: 'DeFi rebuilds traditional financial tools on the blockchain, creating an open and interoperable financial system. It removes intermediaries like banks, enabling peer-to-peer lending, borrowing, and trading through smart contracts.',
+            links: [
+                { name: 'Ethereum\'s DeFi Overview', url: 'https://ethereum.org/en/defi/' },
+                { name: 'DeFi Explained by Coinbase', url: 'https://www.coinbase.com/learn/crypto-basics/what-is-defi' },
+            ]
+        },
+        {
+            title: 'The Core of Web Development',
+            description: 'Understanding HTML, CSS, and JavaScript is fundamental to creating for the web. These three technologies form the backbone of virtually every website and web application.',
+            links: [
+                { name: 'MDN Web Docs', url: 'https://developer.mozilla.org/' },
+                { name: 'freeCodeCamp', url: 'https://www.freecodecamp.org/' }
+            ]
+        }
+    ], []);
 
-  const handleNavClick = (id) => {
-    setActiveButton(id);
-    console.log(`Navigating to: ${id}`);
-  };
+    useEffect(() => {
+        const storedData = localStorage.getItem('todaysTopicData');
+        const now = new Date().getTime();
+        
+        if (storedData) {
+            const { topic: storedTopic, timestamp } = JSON.parse(storedData);
+            // Check if 24 hours have passed
+            if (now - timestamp < 24 * 60 * 60 * 1000) {
+                setTopic(storedTopic);
+                return;
+            }
+        }
+        
+        // If no data or data is stale, select a new topic from the static list
+        const randomIndex = Math.floor(Math.random() * topics.length);
+        const newTopic = topics[randomIndex];
+        setTopic(newTopic);
+        localStorage.setItem('todaysTopicData', JSON.stringify({ topic: newTopic, timestamp: now }));
 
-  const handleLogout = () => {
-    console.log('Logging out...');
-    navigate('/login');
-  };
+    }, [topics]);
 
-  return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #ECFAE5 0%, #DDF6D2 100%)' }}>
-      <header className="flex justify-end p-6">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-lg shadow-md transition-all duration-200 text-gray-700 hover:text-red-600 font-medium"
-        >
-          <LogOut size={20} />
-          Logout
-        </button>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex flex-col items-center justify-center px-6 pb-12">
-        <div className="w-full max-w-4xl">
-          {/* Title */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-800 mb-4">Dashboard</h1>
-            <p className="text-lg text-gray-600">Choose a module to get started</p>
-          </div>
-
-          {/* Navigation Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {navigationItems.map((item) => {
-              const IconComponent = item.icon;
-              const isActive = activeButton === item.id;
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  className={`
-                    group relative overflow-hidden
-                    p-8 rounded-xl shadow-lg
-                    bg-white bg-opacity-90 hover:bg-opacity-100
-                    border border-white border-opacity-50
-                    transition-all duration-300 ease-in-out
-                    transform hover:scale-105 hover:shadow-xl
-                    ${isActive ? 'ring-2 ring-green-400 bg-opacity-100 scale-105' : ''}
-                  `}
-                >
-                  {/* Background Pattern */}
-                  <div className="absolute top-0 right-0 -mt-4 -mr-4 w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-full opacity-20 group-hover:opacity-30 transition-opacity"></div>
-                  
-                  {/* Content */}
-                  <div className="relative z-10 flex flex-col items-center text-center">
-                    <div className={`
-                      p-4 rounded-full mb-4 transition-all duration-300
-                      ${isActive 
-                        ? 'bg-green-500 text-white' 
-                        : 'bg-green-100 text-green-600 group-hover:bg-green-200'
-                      }
-                    `}>
-                      <IconComponent size={28} />
-                    </div>
-                    
-                    <h3 className={`
-                      text-xl font-semibold mb-2 transition-colors
-                      ${isActive ? 'text-green-700' : 'text-gray-800 group-hover:text-green-700'}
-                    `}>
-                      {item.label}
-                    </h3>
-                    
-                    <div className={`
-                      w-12 h-1 rounded-full transition-all duration-300
-                      ${isActive 
-                        ? 'bg-green-500' 
-                        : 'bg-gray-300 group-hover:bg-green-400'
-                      }
-                    `}></div>
-                  </div>
-                  
-                  {/* Hover Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-green-50 to-emerald-50 opacity-0 group-hover:opacity-20 transition-opacity rounded-xl"></div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Active Section Indicator */}
-          {activeButton && (
-            <div className="mt-12 p-6 bg-white bg-opacity-60 rounded-lg text-center">
-              <p className="text-lg text-gray-700">
-                Selected: <span className="font-semibold text-green-700 capitalize">
-                  {navigationItems.find(item => item.id === activeButton)?.label}
-                </span>
-              </p>
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
-  );
+    return topic;
 };
-export default Student;
+
+
+// --- DATA & CONFIGURATION ---
+const useDashboardFeatures = () => useMemo(() => [
+    { 
+      id: 'resources', 
+      title: 'Academic Resources', 
+      description: 'A vast library of notes and e-books.',
+      imageUrl: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=800&auto=format&fit=crop',
+      buttonText: 'Unlock Knowledge',
+    },
+    { 
+      id: 'problemsolving', 
+      title: 'Problem Solving', 
+      description: 'Master key algorithmic patterns.',
+      imageUrl: 'https://images.unsplash.com/photo-1589149098258-3e9102cd63d3?q=80&w=800&auto=format&fit=crop',
+      buttonText: 'Sharpen Skills',
+    },
+    { 
+      id: 'projects', 
+      title: 'Project Guidelines', 
+      description: 'End-to-end guidance for impactful projects.',
+      imageUrl: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=800&auto=format&fit=crop',
+      buttonText: 'Build Your Vision',
+    },
+    { 
+      id: 'markingsystem', 
+      title: 'Marking System', 
+      description: 'Understand evaluation and scoring.',
+      imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop',
+      buttonText: 'Decode Grades',
+    },
+    { 
+      id: 'seniorsexp', 
+      title: 'Seniors Experience', 
+      description: 'Learn from real stories and alumni tips.',
+      imageUrl: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=800&auto=format&fit=crop',
+      buttonText: 'Gain Insights',
+    },
+    { 
+      id: 'guide', 
+      title: 'Guidance', 
+      description: 'Connect with mentors and guides.',
+      imageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=800&auto=format&fit=crop',
+      buttonText: 'Get Support',
+    },
+    { 
+      id: 'leavetracker', 
+      title: 'Leave Tracker', 
+      description: 'Manage your attendance and leave.',
+      imageUrl: 'https://images.unsplash.com/photo-1554236376-3b214932856c?q=80&w=800&auto=format&fit=crop',
+      buttonText: 'Track Your Time',
+    },
+], []);
+
+// --- ANIMATION VARIANTS ---
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.07, delayChildren: 0.2 }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, scale: 0.95, y: 20 },
+    visible: {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        transition: { duration: 0.5, ease: "easeOut" }
+    }
+};
+
+// --- REUSABLE COMPONENTS ---
+const FeatureCard = ({ feature }) => {
+  const navigate = useNavigate();
+    const handleRedirect = () => {
+        console.log(`Redirecting to ${feature.id}...`);
+        navigate(`/student/${feature.id}`);
+    };
+
+    return (
+        <motion.div
+            variants={itemVariants}
+            className="relative group rounded-2xl overflow-hidden h-full shadow-lg"
+            style={{ minHeight: '250px' }}
+        >
+            <img
+                src={feature.imageUrl}
+                alt={feature.title}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/ef4444/ffffff?text=Error'; }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-#DDF6D2 via-#DDF6D2 to-transparent" />
+            <div className="relative h-full flex flex-col justify-end p-4 md:p-6 text-white">
+                <h3 className="font-space font-bold text-xl md:text-2xl">
+                    {feature.title}
+                </h3>
+                <p className="font-inter text-sm mt-1 opacity-90">
+                    {feature.description}
+                </p>
+                <motion.button
+                    onClick={handleRedirect}
+                    className="mt-4 inline-flex items-center gap-2 text-sm font-semibold py-2 px-4 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    {feature.buttonText}
+                    <ArrowRight className="w-4 h-4" />
+                </motion.button>
+            </div>
+        </motion.div>
+    );
+};
+
+const TopicOfTheDay = ({ topic }) => {
+    return (
+        <motion.section 
+            className="mb-12 md:mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+        >
+            <div className="relative rounded-2xl overflow-hidden p-6 md:p-8 bg-gradient-to-br from-#DDF6D2-800 to-#DDF6D2-900 text-black shadow-2xl">
+                <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-8">
+                    {/* Left Side: Title and Description */}
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                            <Star className="w-6 h-6 text-green-400"/>
+                            <p className="font-mono text-sm font-semibold tracking-wider uppercase text-green-400">
+                                Topic of the Day
+                            </p>
+                        </div>
+                        <h3 className=" font-bold text-2xl md:text-4xl">
+                            {topic.title}
+                        </h3>
+                        <p className="font-inter text-base mt-3 opacity-80 leading-relaxed">
+                            {topic.description}
+                        </p>
+                    </div>
+
+                    {/* Right Side: Learn More Links - Stacks below on mobile */}
+                    <div className="flex-shrink-0 md:border-l md:border-gray-700 md:pl-8 mt-6 md:mt-0 pt-6 md:pt-0 border-t border-gray-700 md:border-t-0">
+                        <h4 className="font-space font-semibold text-lg mb-3">Learn More:</h4>
+                        <ul className="space-y-2">
+                            {topic.links.map((link, index) => (
+                                <li key={index}>
+                                    <a 
+                                        href={link.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 text-sm text-black-300 hover:text-gray transition-colors group"
+                                    >
+                                        <LinkIcon className="w-4 h-4 text-gray-400 group-hover:text-green-400 transition-colors" />
+                                        <span>{link.name}</span>
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </motion.section>
+    );
+};
+
+
+// --- MAIN DASHBOARD COMPONENT ---
+const RedesignedDashboard = () => {
+    const dashboardFeatures = useDashboardFeatures();
+    const todaysTopic = useTodaysTopic();
+
+    return (
+        <div className="min-h-screen bg-#DDF6D2">
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+                body { 
+                    font-family: 'Inter', sans-serif; 
+                    background-color: #ffffff;
+                }
+                .font-space { font-family: 'Space Grotesk', sans-serif; }
+                .font-inter { font-family: 'Inter', sans-serif; }
+            `}</style>
+
+            <div className="bg-gradient-to-b from-#DDF6D2 to-white">
+                <section className="py-12 md:py-16 text-center">
+                    <div className="max-w-4xl mx-auto px-4">
+                        <motion.h2 
+                            className="font-serif font-bold text-3xl sm:text-5xl text-gray-900 leading-tight"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, ease: "easeOut" }}
+                        >
+                            Your Academic Command Center
+                        </motion.h2>
+                        <motion.p 
+                            className="font-inter text-md md:text-lg text-gray-600 max-w-2xl mx-auto mt-4"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+                        >
+                            Every tool, every resource, every opportunity—right at your fingertips.
+                        </motion.p>
+                    </div>
+                </section>
+
+                <main className="pb-16 sm:pb-20">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <TopicOfTheDay topic={todaysTopic} />
+                        
+                        <motion.div 
+                            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                        >
+                            {dashboardFeatures.map((feature) => (
+                                <FeatureCard key={feature.id} feature={feature} />
+                            ))}
+                        </motion.div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    );
+};
+
+export default RedesignedDashboard;

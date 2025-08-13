@@ -1,27 +1,7 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Rocket, BookOpen, FileText, Lightbulb, Zap, Target, Sparkles, Menu, X, Github, Twitter, Linkedin, CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Rocket, BookOpen, FileText, Lightbulb, Zap, Target, Sparkles, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-function AnimatedBackground() {
-    return (
-        <motion.div
-            className="absolute inset-0 z-0"
-            style={{
-                background: 'linear-gradient(120deg, #ECFAE5, #DDF6D2, #ECFAE5)',
-                backgroundSize: '200% 200%',
-            }}
-            animate={{
-                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-            }}
-            transition={{
-                duration: 20,
-                ease: 'linear',
-                repeat: Infinity,
-            }}
-        />
-    );
-}
 
 
 const heroContainerVariants = {
@@ -63,23 +43,7 @@ const bentoBoxVariants = {
     },
 };
 
-const mobileNavVariants = {
-    hidden: {
-        y: "-100%",
-        opacity: 0,
-        transition: { duration: 0.4, ease: "easeInOut" }
-    },
-    visible: {
-        y: "0%",
-        opacity: 1,
-        transition: { duration: 0.4, ease: "easeInOut", staggerChildren: 0.1, delayChildren: 0.2 }
-    }
-};
 
-const mobileLinkVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { ease: "easeOut" } }
-};
 
 
 
@@ -92,79 +56,8 @@ const features = [
     { id: 'interview-experiences', icon: Target, title: 'Interview Experiences', description: 'Learn from the best. Read through hundreds of real interview stories and preparation tips shared by seniors and alumni from top companies.', highlight: '300+ Experiences', className: '', bgColor: 'bg-indigo-50', iconColor: 'text-indigo-600', subFeatures: ['Company-specific experiences', 'Technical & HR round insights', 'Salary negotiation tips'] }
 ];
 
-const navLinks = [
-    { href: "#features", text: "Features" },
-    { href: "#tech-roadmap", text: "Roadmaps" },
-    { href: "#academic-resources", text: "Academics" },
-    { href: "#interview-experiences", text: "Interviews" },
-];
 
-
-
-const Header = () => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    return (
-        <>
-            <motion.header
-                initial={{ y: -100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-                className="fixed top-0 left-0 right-0 z-50 bg-[#ECFAE5] backdrop-blur-lg"
-            >
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-20">
-                        <a href="#" className="font-serif text-2xl font-bold text-gray-900">Padida Parama</a>
-                        <nav className="hidden md:flex items-center gap-8">
-                            {navLinks.map(link => (
-                                <a key={link.href} href={link.href} className="text-gray-700 hover:text-gray-900 transition-colors font-medium">{link.text}</a>
-                            ))}
-                        </nav>
-                        <div className="md:hidden">
-                            <motion.button onClick={() => setIsOpen(!isOpen)} whileTap={{ scale: 0.9 }}>
-                                <Menu className="w-6 h-6" />
-                            </motion.button>
-                        </div>
-                    </div>
-                </div>
-            </motion.header>
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        variants={mobileNavVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="hidden"
-                        className="fixed inset-0 z-40 bg-[#ECFAE5] flex flex-col items-center justify-center"
-                    >
-                        <motion.button
-                            onClick={() => setIsOpen(false)}
-                            className="absolute top-7 right-4"
-                            whileTap={{ scale: 0.9 }}
-                        >
-                            <X className="w-8 h-8" />
-                        </motion.button>
-                        <nav className="flex flex-col items-center gap-10">
-                            {navLinks.map(link => (
-                                <motion.a
-                                    key={link.href}
-                                    href={link.href}
-                                    onClick={() => setIsOpen(false)}
-                                    variants={mobileLinkVariants}
-                                    className="font-serif text-4xl text-gray-900"
-                                >
-                                    {link.text}
-                                </motion.a>
-                            ))}
-                        </nav>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </>
-    );
-};
-
-const BentoBox = ({ className, children }) => {
+const BentoBox = ({ children }) => {
     return (
         <motion.div
             variants={bentoBoxVariants}
@@ -240,49 +133,6 @@ const FeatureRow = ({ feature, index }) => {
     );
 };
 
-const Footer = () => {
-    return (
-        <footer className="bg-transparent py-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
-                    <div className="col-span-2 lg:col-span-1">
-                        <h3 className="font-serif text-2xl font-bold text-gray-900">Padida Parama</h3>
-                        <p className="mt-2 text-gray-600 text-sm">Your academic and career navigator.</p>
-                    </div>
-                    <div className="col-span-1">
-                        <h4 className="font-bold text-gray-800 mb-4">Resources</h4>
-                        <ul className="space-y-2">
-                            <li><a href="#tech-roadmap" className="text-gray-600 hover:text-gray-900">Tech Roadmaps</a></li>
-                            <li><a href="#academic-resources" className="text-gray-600 hover:text-gray-900">Academics</a></li>
-                            <li><a href="#project-guide" className="text-gray-600 hover:text-gray-900">Project Guides</a></li>
-                        </ul>
-                    </div>
-                    <div className="col-span-1">
-                        <h4 className="font-bold text-gray-800 mb-4">Preparation</h4>
-                        <ul className="space-y-2">
-                            <li><a href="#past-papers" className="text-gray-600 hover:text-gray-900">Past Papers</a></li>
-                            <li><a href="#problem-solving" className="text-gray-600 hover:text-gray-900">Patterns</a></li>
-                            <li><a href="#interview-experiences" className="text-gray-600 hover:text-gray-900">Interviews</a></li>
-                        </ul>
-                    </div>
-                    <div className="col-span-2 md:col-span-1">
-                        <h4 className="font-bold text-gray-800 mb-4">Connect</h4>
-                        <div className="flex gap-4">
-                            <a href="#" className="text-gray-500 hover:text-gray-900"><Twitter /></a>
-                            <a href="#" className="text-gray-500 hover:text-gray-900"><Github /></a>
-                            <a href="#" className="text-gray-500 hover:text-gray-900"><Linkedin /></a>
-                        </div>
-                    </div>
-                </div>
-                <div className="mt-12 pt-8 border-t border-gray-200 text-center text-gray-500">
-                    <p className="font-mono text-sm">&copy; {new Date().getFullYear()} MCA Senior Batch. Crafted with ❤️ for our juniors.</p>
-                </div>
-            </div>
-        </footer>
-    );
-};
-
-
 
 export default function App() {
 
@@ -290,26 +140,15 @@ export default function App() {
     const subHeadline = "daw Unaku";
 
     return (
-        <div className="min-h-screen bg-[#ECFAE5] font-sans text-gray-800 overflow-x-hidden">
+        <div className="min-h-screen font-sans text-gray-800 overflow-x-hidden">
              <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500&family=Space+Grotesk:wght@400;500;700&display=swap');
                 body { font-family: 'Space Grotesk', sans-serif; scroll-behavior: smooth; }
                 .font-serif { font-family: 'Instrument Serif', serif; }
                 .font-space { font-family: 'Space Grotesk', sans-serif; }
                 .font-mono { font-family: 'JetBrains Mono', monospace; }
-                :root {
-                    --color-green-600: #16a34a;
-                    --color-blue-600: #2563eb;
-                    --color-yellow-600: #ca8a04;
-                    --color-purple-600: #9333ea;
-                    --color-rose-600: #e11d48;
-                    --color-indigo-600: #4f46e5;
-                }
             `}
             </style>
-            
-            <AnimatedBackground />
-            <Header />
 
             <div className="relative z-10">
                
@@ -363,7 +202,7 @@ export default function App() {
                 </motion.header>
 
                
-                <main id="features" className="py-16 sm:py-24 md:py-32 bg-white">
+                <main id="features" className="py-16 sm:py-24 md:py-32 bg-gradient-to-b from-#DDF6D2 to-white/80">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16 md:mb-24">
                              <h2 className="text-3xl sm:text-5xl font-bold font-serif text-gray-900">Everything You Need, All in One Place</h2>
@@ -376,8 +215,6 @@ export default function App() {
                         </div>
                     </div>
                 </main>
-
-                <Footer />
             </div>
         </div>
     );

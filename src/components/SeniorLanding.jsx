@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { GraduationCap, LogOut, BookOpen, FileCode, UserCheck, Eye, Edit3, Lock, Rocket, FileText, Lightbulb, Zap, Target, ArrowRight, CheckCircle, Users, Calendar, TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Mock function for logout
-const handleLogout = () => {
-  console.log("Senior logged out");
-};
 
 // Module Section Component with alternating layout
 const ModuleSection = ({ module, index, isReversed = false }) => {
@@ -61,8 +59,7 @@ const ModuleSection = ({ module, index, isReversed = false }) => {
           )}
 
                     
-          <button
-            onClick={module.action}
+          <Link to={`/senior/${module.id}`} onClick={module.action}
             className={`group w-full py-4 px-6 rounded-2xl font-semibold font-space transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 bg-gray-200 text-gray-600 hover:bg-gray-300`}
           >
             <>
@@ -70,7 +67,7 @@ const ModuleSection = ({ module, index, isReversed = false }) => {
               View 
             </>
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-          </button>
+          </Link>
                     
           {module.stats && (
             <div className="mt-6 grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
@@ -102,7 +99,7 @@ export default function SeniorDashboard() {
   // Enhanced modules data with detailed information
   const modules = [
     {
-      id: 'tech-roadmap',
+      id: 'roadmap',
       icon: Rocket,
       title: 'Technology Roadmaps',
       description: 'Comprehensive career paths and learning trajectories for modern tech specializations.',
@@ -118,23 +115,7 @@ export default function SeniorDashboard() {
       action: () => console.log("View Roadmaps")
     },
     {
-      id: 'academic-hub',
-      icon: BookOpen,
-      title: 'Academic Hub',
-      description: 'Centralized repository for all academic materials, syllabi, and educational resources.',
-      longDescription: 'Manage comprehensive academic content including semester-wise syllabi, lecture notes, e-books, reference materials, and previous year question papers. Organize content for easy student access.',
-      isEditable: true,
-      features: [
-        'Upload and organize syllabus documents by semester',
-        'Manage lecture notes and study materials',
-        'Curate e-book collections and reference guides',
-        'Organize previous year question papers',
-        'Version control for academic content updates'
-      ],
-      action: () => console.log("Manage Academic Hub")
-    },
-    {
-      id: 'project-hub',
+      id: 'project',
       icon: FileCode,
       title: 'Impactful Project Hub',
       description: 'Project ideation, development guidance, and showcase management platform.',
@@ -150,10 +131,10 @@ export default function SeniorDashboard() {
       action: () => console.log("Manage Project Hub")
     },
     {
-      id: 'interview-experiences',
+      id: 'problemsolving',
       icon: UserCheck,
-      title: 'Interview Experiences',
-      description: 'Company-specific interview insights, preparation materials, and placement guidance.',
+      title: 'Post Problems From Experiences',
+      description: 'Company-specific interview Problems, preparation materials, and placement guidance.',
       longDescription: 'Comprehensive collection of real interview experiences from top companies, including technical questions, HR rounds, and salary negotiations. Regularly updated with fresh insights.',
       isEditable: true,
       features: [
@@ -165,38 +146,6 @@ export default function SeniorDashboard() {
       ],
       action: () => console.log("Manage Interview Experiences")
     },
-    {
-      id: 'problem-solving',
-      icon: Lightbulb,
-      title: 'Problem-Solving & Frameworks',
-      description: 'Algorithmic thinking patterns, software design principles, and methodologies.',
-      longDescription: 'Access comprehensive content on data structures, algorithms, design patterns, and problem-solving methodologies. Essential for technical interview preparation and software development.',
-      isEditable: false,
-      features: [
-        'Data structures and algorithms patterns',
-        'Software design principles and SOLID concepts',
-        'System design fundamentals and case studies',
-        'Competitive programming strategies',
-        'Code optimization techniques and best practices'
-      ],
-      action: () => console.log("View Frameworks")
-    },
-    {
-      id: 'admin-tools',
-      icon: Target,
-      title: 'Admin & Academic Tools',
-      description: 'Administrative utilities for academic tracking and student management.',
-      longDescription: 'Collection of administrative tools including CGPA calculators, attendance trackers, academic progress monitors, and student performance analytics for comprehensive academic management.',
-      isEditable: false,
-      features: [
-        'CGPA calculator with semester-wise tracking',
-        'Attendance monitoring and reporting tools',
-        'Academic progress tracking dashboards',
-        'Student performance analytics',
-        'Administrative reporting and insights'
-      ],
-      action: () => console.log("View Admin Tools")
-    }
   ];
 
   return (
@@ -266,38 +215,7 @@ export default function SeniorDashboard() {
         }
       `}</style>
 
-      <div className="min-h-screen bg-light-gradient">
-        {/* Enhanced Header */}
-        <header className="bg-white/95 backdrop-blur-lg shadow-xl sticky top-0 z-50 border-b border-lime-100">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="flex items-center justify-between h-20">
-              {/* Logo Section */}
-              <div className="flex items-center gap-4 animate-fade-in-up">
-                <div className="p-3 rounded-2xl bg-lime-gradient shadow-lime">
-                  <GraduationCap className="text-white" size={32} />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 font-serif tracking-tight">
-                    MCA Compass
-                  </h1>
-                  <div className="text-sm text-lime-700 font-medium font-mono tracking-wide uppercase">
-                    Senior Portal
-                  </div>
-                </div>
-              </div>
-              {/* Logout Button */}
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-3 bg-white text-gray-700 font-semibold py-3 px-6 rounded-2xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 transition-all duration-300 shadow-lg border border-gray-200 hover:shadow-xl transform hover:scale-105 active:scale-95 font-space hover:text-lime-600"
-              >
-                <LogOut size={20} />
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Hero Section */}
+      <div className="min-h-screen bg-gradient-to-b from-#DDF6D2 to-white">
         <section className="py-16 sm:py-24">
           <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 font-serif animate-fade-in-up">
@@ -308,8 +226,6 @@ export default function SeniorDashboard() {
             </p>
           </div>
         </section>
-
-        {/* Modules Sections */}
         <main className="max-w-7xl mx-auto px-6 lg:px-8 pb-20">
           {modules.map((module, index) => (
             <ModuleSection

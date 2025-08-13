@@ -155,7 +155,7 @@ export default function Login() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-[#f3f7f2] font-sans relative"
+      className="min-h-screen flex items-center justify-center bg-gradient-to-b from-#DDF6D2 to-white font-sans relative"
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
       <ParticlesBg />
