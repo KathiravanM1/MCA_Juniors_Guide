@@ -141,17 +141,17 @@ const AnnaUniversityMarkingSystem = () => {
     <div className="min-h-screen font-space bg-gradient-to-b from-#DDF6D2 to-white">
       {/* Header */}
       <header className="bg-#DDF6D2 shadow-sm " style={{ borderColor: '#DDF6D2' }}>
-        <div className="max-w-9xl mx-auto px-4 py-6">
+        <div className="max-w-9xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2 font-serif">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 font-serif">
               Anna University Marking System
             </h1>
-            <p className="text-lg text-gray-600">Understanding Grades, Credits, and CGPA Calculation</p>
+            <p className="text-sm sm:text-base lg:text-lg text-gray-600">Understanding Grades, Credits, and CGPA Calculation</p>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Assessment Breakdown Section */}
         <div 
           className="bg-white rounded-xl shadow-lg p-8 mb-8 border-l-4 animate-fadeInUp" 

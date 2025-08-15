@@ -1,20 +1,29 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { GraduationCap, Menu, X, Twitter, Github, Linkedin, Home, UserPlus, LogIn, ArrowUp } from 'lucide-react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { GraduationCap, Menu, X, Twitter, Github, Linkedin, ArrowUp, LogOut, Shield, Settings, Users, Database, BarChart3, FileText } from 'lucide-react';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 
+// --- DATA ---
+const adminNavLinks = [
+    { href: "", text: "Dashboard", icon: BarChart3 },
+    { href: "resources", text: "Manage Resources", icon: FileText }
+];
 
-const DefaultHeader = () => {
-    const [isOpen, setIsOpen] = useState(false);
+const AdminHeader = () => {
+    const navigate = useNavigate();
     const location = useLocation();
+    const [isOpen, setIsOpen] = useState(false);
+    
+    const handleLogout = () => {
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('adminToken');
+        navigate('/login');
+    };
 
-    const navItems = useMemo(() => [
-        { name: 'Home', path: '/', icon: Home },
-        { name: 'Login', path: '/login', icon: LogIn },
-        { name: 'Sign Up', path: '/signup', icon: UserPlus }
-    ], []);
-
-    const isActive = useCallback((path) => location.pathname === path, [location.pathname]);
+    const isActive = (path) => {
+        const currentPath = location.pathname.replace('/admin/', '') || '';
+        return currentPath === path;
+    };
 
     return (
         <>
@@ -22,37 +31,49 @@ const DefaultHeader = () => {
                 initial={{ y: -100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
-                className="fixed top-0 left-0 right-0 z-50 bg-white backdrop-blur-lg shadow-sm"
+                className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg shadow-sm border-b border-red-100"
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
                         {/* Left Side: Logo and App Name */}
-                        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                        <Link to="/admin" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                             <GraduationCap className="w-8 h-8 text-gray-800" />
                             <span className="font-serif text-2xl font-bold text-gray-900">Vidivu</span>
+                            <span className="hidden sm:inline text-sm text-gray-600 font-medium items-center gap-1">
+                                <Shield className="w-3 h-3" />
+                                Admin
+                            </span>
                         </Link>
 
-                        {/* Right Side: Desktop Navigation */}
-                        <div className="hidden md:flex items-center gap-4 lg:gap-8">
-                            <nav className="flex items-center gap-8">
-                                {navItems.slice(1).map((item) => {
-                                    const Icon = item.icon;
+                        {/* Right Side: Desktop Navigation and Logout */}
+                        <div className="hidden md:flex items-center gap-4 lg:gap-6">
+                            <nav className="flex items-center gap-6">
+                                {adminNavLinks.slice(0, 4).map(link => {
+                                    const Icon = link.icon;
                                     return (
                                         <Link
-                                            key={item.name}
-                                            to={item.path}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                                                isActive(item.path)
+                                            key={link.text}
+                                            to={`/admin/${link.href}`}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 ${
+                                                isActive(link.href)
                                                     ? 'bg-gray-100 text-gray-900 font-medium'
                                                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                                             }`}
                                         >
                                             <Icon className="w-4 h-4" />
-                                            {item.name}
+                                            <span className="hidden lg:inline">{link.text}</span>
                                         </Link>
                                     );
                                 })}
                             </nav>
+                            <div className="h-6 w-px bg-gray-300"></div>
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg font-medium transition-all duration-200"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                <span className="hidden lg:inline">Logout</span>
+                            </button>
                         </div>
 
                         {/* Mobile Menu Button */}
@@ -68,7 +89,7 @@ const DefaultHeader = () => {
                     </div>
                 </div>
 
-                {/* Mobile Menu */}
+                {/* Mobile Navigation Menu */}
                 <AnimatePresence>
                     {isOpen && (
                         <motion.div
@@ -79,24 +100,33 @@ const DefaultHeader = () => {
                             className="md:hidden bg-white border-t border-gray-200 shadow-lg"
                         >
                             <div className="px-4 py-4 space-y-2">
-                                {navItems.map((item) => {
-                                    const Icon = item.icon;
+                                {adminNavLinks.map((link) => {
+                                    const Icon = link.icon;
                                     return (
                                         <Link
-                                            key={item.name}
-                                            to={item.path}
+                                            key={link.text}
+                                            to={`/admin/${link.href}`}
                                             onClick={() => setIsOpen(false)}
                                             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                                                isActive(item.path)
+                                                isActive(link.href)
                                                     ? 'bg-gray-100 text-gray-900 font-medium'
                                                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                                             }`}
                                         >
                                             <Icon className="w-5 h-5" />
-                                            {item.name}
+                                            {link.text}
                                         </Link>
                                     );
                                 })}
+                                <div className="border-t border-gray-200 pt-2 mt-2">
+                                    <button
+                                        onClick={handleLogout}
+                                        className="flex items-center gap-3 px-4 py-3 w-full text-left text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg font-medium transition-all duration-200"
+                                    >
+                                        <LogOut className="w-5 h-5" />
+                                        Logout
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     )}
@@ -106,7 +136,7 @@ const DefaultHeader = () => {
     );
 };
 
-const DefaultFooter = () => {
+const AdminFooter = () => {
     return (
         <motion.footer 
             initial={{ opacity: 0 }}
@@ -139,13 +169,13 @@ const DefaultFooter = () => {
                     </motion.a>
                 </div>
                 <p className="font-mono text-sm text-gray-500">&copy; {new Date().getFullYear()} Vidivu. All rights reserved.</p>
+                <p className="font-mono text-xs text-gray-600 mt-1">Admin Panel - Restricted Access</p>
             </div>
         </motion.footer>
     );
 };
 
-
-export default function DefaultLayout() {
+export default function AdminLayout() {
     const [showScrollTop, setShowScrollTop] = useState(false);
 
     useEffect(() => {
@@ -178,14 +208,14 @@ export default function DefaultLayout() {
                 .font-mono { font-family: 'JetBrains Mono', monospace; }
             `}</style>
             
-            <DefaultHeader />
+            <AdminHeader />
             <main className="flex-grow pt-20">
                 <div className="max-w-10xl mx-auto min-h-[calc(100vh-160px)]" style={{background: 'linear-gradient(135deg, #ECFAE5 0%, #DDF6D2 100%)'}}>
                     <Outlet/>
                 </div>
             </main>
 
-            <DefaultFooter />
+            <AdminFooter />
             
             {/* Scroll to Top Button */}
             <AnimatePresence>

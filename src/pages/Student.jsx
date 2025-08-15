@@ -100,7 +100,7 @@ const useDashboardFeatures = () => useMemo(() => [
       buttonText: 'Decode Grades',
     },
     { 
-      id: 'seniorsexp', 
+      id: 'roadmap', 
       title: 'Seniors Experience', 
       description: 'Learn from real stories and alumni tips.',
       imageUrl: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=800&auto=format&fit=crop',
@@ -162,16 +162,16 @@ const FeatureCard = ({ feature }) => {
                 onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/ef4444/ffffff?text=Error'; }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-#DDF6D2 via-#DDF6D2 to-transparent" />
-            <div className="relative h-full flex flex-col justify-end p-4 md:p-6 text-white">
-                <h3 className="font-space font-bold text-xl md:text-2xl">
+            <div className="relative h-full flex flex-col justify-end p-3 sm:p-4 lg:p-6 text-white">
+                <h3 className="font-space font-bold text-lg sm:text-xl lg:text-2xl">
                     {feature.title}
                 </h3>
-                <p className="font-inter text-sm mt-1 opacity-90">
+                <p className="font-inter text-xs sm:text-sm mt-1 opacity-90">
                     {feature.description}
                 </p>
                 <motion.button
                     onClick={handleRedirect}
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-semibold py-2 px-4 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+                    className="mt-3 sm:mt-4 inline-flex items-center gap-2 text-xs sm:text-sm font-semibold py-2 px-3 sm:px-4 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                 >
@@ -191,8 +191,8 @@ const TopicOfTheDay = ({ topic }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
         >
-            <div className="relative rounded-2xl overflow-hidden p-6 md:p-8 bg-gradient-to-br from-#DDF6D2-800 to-#DDF6D2-900 text-black shadow-2xl">
-                <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-8">
+            <div className="relative rounded-xl sm:rounded-2xl overflow-hidden p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-#DDF6D2-800 to-#DDF6D2-900 text-black shadow-2xl">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4 sm:gap-6 lg:gap-8">
                     {/* Left Side: Title and Description */}
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
@@ -201,17 +201,17 @@ const TopicOfTheDay = ({ topic }) => {
                                 Topic of the Day
                             </p>
                         </div>
-                        <h3 className=" font-bold text-2xl md:text-4xl">
+                        <h3 className=" font-bold text-xl sm:text-2xl lg:text-3xl xl:text-4xl">
                             {topic.title}
                         </h3>
-                        <p className="font-inter text-base mt-3 opacity-80 leading-relaxed">
+                        <p className="font-inter text-sm sm:text-base mt-3 opacity-80 leading-relaxed">
                             {topic.description}
                         </p>
                     </div>
 
                     {/* Right Side: Learn More Links - Stacks below on mobile */}
-                    <div className="flex-shrink-0 md:border-l md:border-gray-700 md:pl-8 mt-6 md:mt-0 pt-6 md:pt-0 border-t border-gray-700 md:border-t-0">
-                        <h4 className="font-space font-semibold text-lg mb-3">Learn More:</h4>
+                    <div className="flex-shrink-0 lg:border-l lg:border-gray-700 lg:pl-8 mt-4 sm:mt-6 lg:mt-0 pt-4 sm:pt-6 lg:pt-0 border-t border-gray-700 lg:border-t-0">
+                        <h4 className="font-space font-semibold text-base sm:text-lg mb-3">Learn More:</h4>
                         <ul className="space-y-2">
                             {topic.links.map((link, index) => (
                                 <li key={index}>
@@ -219,7 +219,7 @@ const TopicOfTheDay = ({ topic }) => {
                                         href={link.url} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-2 text-sm text-black-300 hover:text-gray transition-colors group"
+                                        className="flex items-center gap-2 text-xs sm:text-sm text-black-300 hover:text-gray transition-colors group"
                                     >
                                         <LinkIcon className="w-4 h-4 text-gray-400 group-hover:text-green-400 transition-colors" />
                                         <span>{link.name}</span>
@@ -254,9 +254,9 @@ const RedesignedDashboard = () => {
 
             <div className="bg-gradient-to-b from-#DDF6D2 to-white">
                 <section className="py-12 md:py-16 text-center">
-                    <div className="max-w-4xl mx-auto px-4">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-6">
                         <motion.h2 
-                            className="font-serif font-bold text-3xl sm:text-5xl text-gray-900 leading-tight"
+                            className="font-serif font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-gray-900 leading-tight"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, ease: "easeOut" }}
@@ -264,7 +264,7 @@ const RedesignedDashboard = () => {
                             Your Academic Command Center
                         </motion.h2>
                         <motion.p 
-                            className="font-inter text-md md:text-lg text-gray-600 max-w-2xl mx-auto mt-4"
+                            className="font-inter text-sm sm:text-base lg:text-lg text-gray-600 max-w-2xl mx-auto mt-4"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
@@ -279,7 +279,7 @@ const RedesignedDashboard = () => {
                         <TopicOfTheDay topic={todaysTopic} />
                         
                         <motion.div 
-                            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
                             variants={containerVariants}
                             initial="hidden"
                             animate="visible"

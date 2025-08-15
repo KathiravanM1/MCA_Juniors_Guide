@@ -375,7 +375,7 @@ const UploadSection = ({
 };
 
 // Main Upload Page Component
-export default function SeniorUploadPage() {
+export default function AdminResources() {
   // Question Papers state
   const [qpSelectedSemester, setQpSelectedSemester] = useState(null);
   const [qpSelectedSubject, setQpSelectedSubject] = useState(null);

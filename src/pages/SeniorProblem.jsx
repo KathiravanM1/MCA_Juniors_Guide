@@ -28,10 +28,15 @@ export default function PostProblemPage() {
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         // In a real app, you would send this data to your database
-        console.log("New Problem Submitted:", {
-            ...formData,
-            tags: formData.tags.split(',').map(tag => tag.trim()) // Convert tags string to array
-        });
+        const sanitizedData = {
+            title: formData.title.replace(/[<>"'&]/g, ''),
+            description: formData.description.replace(/[<>"'&]/g, ''),
+            difficulty: formData.difficulty,
+            category: formData.category,
+            subCategory: formData.subCategory.replace(/[<>"'&]/g, ''),
+            tags: formData.tags.split(',').map(tag => tag.trim().replace(/[<>"'&]/g, ''))
+        };
+        console.log("New Problem Submitted:", sanitizedData);
 
         setIsSubmitting(false);
         setSubmitted(true);
@@ -44,17 +49,11 @@ export default function PostProblemPage() {
     };
 
     // --- Data for dropdowns ---
-    const categories = {
-        topics: ["Arrays", "Strings", "Linked Lists", "Trees", "Graphs", "DP"],
-        company: ["Google", "Amazon", "Microsoft", "Facebook", "Netflix"],
-        language: ["Python", "JavaScript", "C++", "Java"],
-        domain: ["AI/ML", "Cybersecurity", "System Design", "Web Development"]
-    };
 
     const difficultyColors = { Easy: 'bg-green-100 text-green-800', Medium: 'bg-yellow-100 text-yellow-800', Hard: 'bg-red-100 text-red-800' };
 
     return (
-        <div className="min-h-screen bg-white font-sans text-gray-800">
+        <div className="min-h-screen bg-gradient-to-b from-#DDF6D2 to-white font-sans text-gray-800">
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&family=Space+Grotesk:wght@400;500;700&display=swap');
                 body { font-family: 'Space Grotesk', sans-serif; }

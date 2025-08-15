@@ -10,27 +10,34 @@ import StudentLayout from "./Layouts/StudentLayout.jsx";
 import AnnaUniversityMarkingSystem from "./pages/MarkingSystem.jsx";
 import Scholarship from "./pages/Scholarship.jsx";
 import DefaultLayout from "./Layouts/DefaultLayout.jsx";
-import SeniorUploadPage from "./pages/SeniorNotes.jsx";
+import SeniorUploadPage from "./pages/AdminResources.jsx";
 import SeniorLayout from "./Layouts/SeniorLayout.jsx";
+import AdminLayout from "./Layouts/AdminLayout.jsx";
 import ProblemSolvingPage from "./pages/ProblemSolving.jsx";
 import ShareProject from "./pages/SeniorExp.jsx";
 import PostProblemPage from "./pages/SeniorProblem.jsx";
 import Projects from "./pages/Projects.jsx";
 import AttendanceTracker from "./pages/LeaveTracker.jsx";
+import Roadmap from "./pages/Roadmap.jsx";
+import AdminPanel from "./pages/AdminPanel.jsx";
+import AdminResources from "./pages/AdminResources.jsx";
+import NotFound from "./pages/NotFound.jsx";
+import SeniorRoadmap from "./components/SeniorRoadmap.jsx";
 
 function App() {
   return (
       <Routes>
-            <Route path="/" element={<DefaultLayout/>}>
+          <Route path="/" element={<DefaultLayout/>}>
             <Route index element={<LandingPage />} />
             <Route path="signup" element={<Signup />} />
             <Route path="login" element={<Login />} />
         </Route>
         <Route path="senior" element={<SeniorLayout />} >
-          <Route index element={<SeniorLanding />} />
-          <Route path="resources" element={<SeniorUploadPage />} />
-          <Route path="project" element={<ShareProject/>} />
-          <Route path="problemsolving" element={<PostProblemPage/>} />
+            <Route index element={<SeniorLanding />} />
+            <Route path="resources" element={<SeniorUploadPage />} />
+            <Route path="project" element={<ShareProject/>} />
+            <Route path="problemsolving" element={<PostProblemPage/>} />
+            <Route path="roadmap" element={<SeniorRoadmap/>} />
         </Route>
         <Route path="student" element={<StudentLayout />}>
             <Route index element={<Student />}/>
@@ -40,6 +47,15 @@ function App() {
             <Route path="problemsolving" element={<ProblemSolvingPage />} />
             <Route path="projects" element={<Projects/>} />
             <Route path="leavetracker" element={<AttendanceTracker/>} />
+            <Route path="roadmap" element={<Roadmap/>} />
+        </Route>
+        <Route path="admin" element={<AdminLayout />}>
+            <Route index element={<AdminPanel />} />
+            <Route path="resources" element={<AdminResources />} />
+        </Route>
+        
+        <Route path="*" element={<DefaultLayout />}>
+            <Route index element={<NotFound />} />
         </Route>
       </Routes>
   );

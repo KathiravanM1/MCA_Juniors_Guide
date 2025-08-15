@@ -123,7 +123,7 @@ export default function AttendanceTracker() {
             }
 
             const newTrackedSubject = {
-                id: Date.now(),
+                id: crypto.randomUUID ? crypto.randomUUID() : `subject-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
                 name: normalizedNewName,
                 credits: parseFloat(newSubjectCredits),
                 hoursAbsent: hours,
@@ -153,7 +153,7 @@ export default function AttendanceTracker() {
 
         // Add to history log
         const newHistoryEntry = {
-            id: Date.now(),
+            id: crypto.randomUUID ? crypto.randomUUID() : `entry-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
             date: new Date().toISOString(),
             subjectName: subjectNameForHistory,
             hours,
