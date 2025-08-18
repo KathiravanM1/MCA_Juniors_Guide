@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, LogOut, Menu, X, Twitter, Github, Linkedin, ArrowUp, BookOpen, Map, Award, Users } from 'lucide-react';
-import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Link, Outlet, useNavigate, useLocation, replace } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 // --- DATA ---
 const studentNavLinks = [
     { href: "", text: "Dashboard", icon: BookOpen },
-    { href: "roadmap", text: "Roadmap", icon: Map },
+    { href: "roadmap", text: "Seniors Interview Preparation", icon: Map },
     { href: "markingsystem", text: "Grades", icon: Award },
     { href: "resources", text: "Resources", icon: BookOpen },
     { href: "problemsolving", text: "Problem Solving", icon: Users },
@@ -14,23 +15,7 @@ const studentNavLinks = [
     { href: "leavetracker", text: "Leave Tracker", icon: BookOpen },
 ];
 
-const mobileNavVariants = {
-    hidden: {
-        y: "-100%",
-        opacity: 0,
-        transition: { duration: 0.4, ease: "easeInOut" }
-    },
-    visible: {
-        y: "0%",
-        opacity: 1,
-        transition: { duration: 0.4, ease: "easeInOut", staggerChildren: 0.1, delayChildren: 0.2 }
-    }
-};
 
-const mobileLinkVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { ease: "easeOut" } }
-};
 
 
 // --- LAYOUT COMPONENTS ---
@@ -39,16 +24,13 @@ const StudentHeader = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
+    const { logout } = useAuth();
     
     const handleLogout = () => {
-        localStorage.removeItem('userToken');
-        navigate('/login');
+        logout();
+        navigate('/',{replace : true});
     };
 
-    const handleNavigate = (path) => {
-        setIsOpen(false);
-        navigate(`/student/${path}`);
-    };
 
     const isActive = (path) => {
         const currentPath = location.pathname.replace('/student/', '') || '';
@@ -211,7 +193,37 @@ const StudentFooter = () => {
 // </StudentLayout>
 
 export default function StudentLayout() {
+    const { isAuthenticated, isLoading } = useAuth();
+    const navigate = useNavigate();
     const [showScrollTop, setShowScrollTop] = useState(false);
+
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            navigate('/', { replace: true });
+        }
+    }, [isAuthenticated, isLoading, navigate]);
+
+    useEffect(() => {
+        const handlePopState = () => {
+            if (!isAuthenticated) {
+                navigate('/', { replace: true });
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [isAuthenticated, navigate]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return null;
+    }
 
     const handleScroll = useCallback(() => {
         setShowScrollTop(window.scrollY > 300);

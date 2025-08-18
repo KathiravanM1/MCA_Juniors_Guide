@@ -123,7 +123,7 @@ export default function AttendanceTracker() {
             }
 
             const newTrackedSubject = {
-                id: crypto.randomUUID ? crypto.randomUUID() : `subject-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+                id: Date.now(), // Use a number for the ID
                 name: normalizedNewName,
                 credits: parseFloat(newSubjectCredits),
                 hoursAbsent: hours,
@@ -138,7 +138,10 @@ export default function AttendanceTracker() {
                 alert('Please select a subject and enter the hours.');
                 return;
             }
-            const existingSubjectIndex = trackedSubjects.findIndex(s => s.id === parseInt(selectedSubjectId));
+            // FIX: Compare numbers with numbers. The select value is a string.
+            const subjectIdAsNumber = parseInt(selectedSubjectId);
+            const existingSubjectIndex = trackedSubjects.findIndex(s => s.id === subjectIdAsNumber);
+
             if (existingSubjectIndex > -1) {
                 const updatedTrackedSubjects = [...trackedSubjects];
                 const subjectToUpdate = updatedTrackedSubjects[existingSubjectIndex];
@@ -146,14 +149,14 @@ export default function AttendanceTracker() {
                 subjectNameForHistory = subjectToUpdate.name;
                 setTrackedSubjects(updatedTrackedSubjects);
             } else {
-                alert('Selected subject not found.');
+                alert('Selected subject not found. Please try again.');
                 return;
             }
         }
 
         // Add to history log
         const newHistoryEntry = {
-            id: crypto.randomUUID ? crypto.randomUUID() : `entry-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+            id: Date.now() + 1, // Ensure unique ID from subject
             date: new Date().toISOString(),
             subjectName: subjectNameForHistory,
             hours,
@@ -241,7 +244,7 @@ export default function AttendanceTracker() {
     }, [trackedSubjects]);
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-#DDF6D2 to-white font-sans">
+        <div className="min-h-screen bg-gradient-to-br from-[#ECFAE5] to-[#DDF6D2] font-sans">
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&family=Space+Grotesk:wght@400;500;700&display=swap');
                 body { font-family: 'Space Grotesk', sans-serif; }

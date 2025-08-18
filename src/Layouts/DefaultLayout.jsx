@@ -185,7 +185,7 @@ export default function DefaultLayout() {
                 </div>
             </main>
 
-            <DefaultFooter />
+            {/* <DefaultFooter /> */}
             
             {/* Scroll to Top Button */}
             <AnimatePresence>

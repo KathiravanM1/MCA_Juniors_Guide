@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Calculator, BookOpen, Award, Info, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -40,7 +40,7 @@ const AnnaUniversityMarkingSystem = () => {
   const [selectedSemesters, setSelectedSemesters] = useState([1]);
   const [allSemesterCourses, setAllSemesterCourses] = useState({});
 
-  const gradeOptions = [
+  const gradeOptions = useMemo(() => [
     { grade: 'O', points: 10, range: '91-100' },
     { grade: 'A+', points: 9, range: '81-90' },
     { grade: 'A', points: 8, range: '71-80' },
@@ -48,7 +48,7 @@ const AnnaUniversityMarkingSystem = () => {
     { grade: 'B', points: 6, range: '56-60' },
     { grade: 'C', points: 5, range: '50-55' },
     { grade: 'U', points: 0, range: '0-49' },
-  ];
+  ], []);
 
   useEffect(() => {
     // Automatically populate Semester 1 on initial load
@@ -64,7 +64,7 @@ const AnnaUniversityMarkingSystem = () => {
     }
   }, []);
 
-  const handleTabClick = (semester) => {
+  const handleTabClick = useCallback((semester) => {
     setActiveTab(semester);
     // Populate courses if they don't exist yet
     if (!allSemesterCourses[semester]) {
@@ -77,13 +77,13 @@ const AnnaUniversityMarkingSystem = () => {
       }));
       setAllSemesterCourses(prev => ({ ...prev, [semester]: semesterCourses }));
     }
-  };
+  }, [allSemesterCourses]);
 
-  const handleSemesterCheck = (semester) => {
+  const handleSemesterCheck = useCallback((semester) => {
     if (selectedSemesters.includes(semester)) {
-      setSelectedSemesters(selectedSemesters.filter(s => s !== semester).sort());
+      setSelectedSemesters(prev => prev.filter(s => s !== semester).sort());
     } else {
-      setSelectedSemesters([...selectedSemesters, semester].sort());
+      setSelectedSemesters(prev => [...prev, semester].sort());
       // Populate courses for calculation if not already in state
       if (!allSemesterCourses[semester]) {
         const semesterCourses = mcaCurriculum[semester].map((course, index) => ({
@@ -96,13 +96,12 @@ const AnnaUniversityMarkingSystem = () => {
         setAllSemesterCourses(prev => ({ ...prev, [semester]: semesterCourses }));
       }
     }
-  };
+  }, [selectedSemesters, allSemesterCourses]);
 
-  const updateCourse = (id, field, value) => {
-    const currentCourses = allSemesterCourses[activeTab];
+  const updateCourse = useCallback((id, field, value) => {
     setAllSemesterCourses(prev => ({
       ...prev,
-      [activeTab]: currentCourses.map(course => {
+      [activeTab]: prev[activeTab]?.map(course => {
         if (course.id === id) {
           const updated = { ...course, [field]: value };
           if (field === 'grade') {
@@ -112,82 +111,82 @@ const AnnaUniversityMarkingSystem = () => {
           return updated;
         }
         return course;
-      })
+      }) || []
     }));
-  };
+  }, [activeTab, gradeOptions]);
 
-  const calculateGPA = (semester) => {
+  const calculateGPA = useCallback((semester) => {
     if (!allSemesterCourses[semester]) return '0.00';
     const courses = allSemesterCourses[semester];
     const passedCourses = courses.filter(course => course.grade !== 'U');
     const totalCredits = passedCourses.reduce((sum, course) => sum + Number(course.credits), 0);
     const totalGradePoints = passedCourses.reduce((sum, course) => sum + (Number(course.credits) * course.gradePoints), 0);
     return totalCredits > 0 ? (totalGradePoints / totalCredits).toFixed(2) : '0.00';
-  };
+  }, [allSemesterCourses]);
 
-  const calculateCGPA = () => {
+  const calculateCGPA = useCallback(() => {
     if (selectedSemesters.length === 0) return '0.00';
     const allCourses = selectedSemesters.flatMap(semester => allSemesterCourses[semester] || []);
     const passedCourses = allCourses.filter(course => course.grade !== 'U');
     const totalCredits = passedCourses.reduce((sum, course) => sum + Number(course.credits), 0);
     const totalGradePoints = passedCourses.reduce((sum, course) => sum + (Number(course.credits) * course.gradePoints), 0);
     return totalCredits > 0 ? (totalGradePoints / totalCredits).toFixed(2) : '0.00';
-  };
+  }, [selectedSemesters, allSemesterCourses]);
   
 
-  const displayedCourses = allSemesterCourses[activeTab] || [];
+  const displayedCourses = useMemo(() => allSemesterCourses[activeTab] || [], [allSemesterCourses, activeTab]);
   
   return (
     <div className="min-h-screen font-space bg-gradient-to-b from-#DDF6D2 to-white">
       {/* Header */}
-      <header className="bg-#DDF6D2 shadow-sm " style={{ borderColor: '#DDF6D2' }}>
-        <div className="max-w-9xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      <header className="bg-#DDF6D2 shadow-sm" style={{ borderColor: '#DDF6D2' }}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6">
           <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 font-serif">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 font-serif leading-tight">
               Anna University Marking System
             </h1>
-            <p className="text-sm sm:text-base lg:text-lg text-gray-600">Understanding Grades, Credits, and CGPA Calculation</p>
+            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 px-2">Understanding Grades, Credits, and CGPA Calculation</p>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
         {/* Assessment Breakdown Section */}
         <div 
-          className="bg-white rounded-xl shadow-lg p-8 mb-8 border-l-4 animate-fadeInUp" 
+          className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8 border-l-4 animate-fadeInUp" 
           style={{ borderColor: '#16A085' }}
         >
-          <div className="flex items-center mb-6">
-            <BookOpen className="h-8 w-8 mr-3" style={{ color: '#16A085' }} />
-            <h2 className="text-3xl font-bold text-gray-800 font-serif">
+          <div className="flex items-center mb-4 sm:mb-6">
+            <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 flex-shrink-0" style={{ color: '#16A085' }} />
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800 font-serif leading-tight">
               Comprehensive Assessment Breakdown
             </h2>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Theory Courses */}
             <motion.div 
-              className="p-6 rounded-xl border-2 animate-slide-in" 
+              className="p-4 sm:p-6 rounded-xl border-2 animate-slide-in" 
               style={{ backgroundColor: '#DDF6D2', borderColor: '#16A085' }}
               whileHover={{ scale: 1.02, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
             >
-              <div className="font-bold text-xl text-gray-800 mb-3 flex items-center">
-                <span className="mr-2">📝</span> Theory Courses (40% IA + 60% ESE)
+              <div className="font-bold text-base sm:text-lg lg:text-xl text-gray-800 mb-3 flex items-center">
+                <span className="mr-2 text-lg">📝</span> Theory Courses (40% IA + 60% ESE)
               </div>
-              <p className="text-sm text-gray-700 mb-4">
+              <p className="text-xs sm:text-sm text-gray-700 mb-4">
                 <span className="font-semibold">Typically for:</span> Mathematical Foundations, AI, Operating Systems.
               </p>
-              <div className="grid md:grid-cols-2 gap-4 text-sm">
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="font-semibold text-gray-700">Internal Assessment (40 Marks)</div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                  <div className="font-semibold text-gray-700 text-xs sm:text-sm">Internal Assessment (40 Marks)</div>
                   <ul className="list-disc list-inside text-xs text-gray-600 mt-2 space-y-1">
                     <li>Test 1: 16 marks (40%)</li>
                     <li>Test 2: 16 marks (40%)</li>
                     <li>Assignment/Seminar: 8 marks (20%)</li>
                   </ul>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="font-semibold text-gray-700">End Semester Exam (60 Marks)</div>
+                <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                  <div className="font-semibold text-gray-700 text-xs sm:text-sm">End Semester Exam (60 Marks)</div>
                   <ul className="list-disc list-inside text-xs text-gray-600 mt-2 space-y-1">
                     <li>3-hour written examination</li>
                     <li>Minimum 45% in ESE to pass</li>
@@ -199,26 +198,26 @@ const AnnaUniversityMarkingSystem = () => {
 
             {/* Theory with Lab Courses */}
             <motion.div 
-              className="p-6 rounded-xl border-2 animate-slide-in" 
+              className="p-4 sm:p-6 rounded-xl border-2 animate-slide-in" 
               style={{ backgroundColor: '#ECFAE5', borderColor: '#16A085' }}
               whileHover={{ scale: 1.02, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
             >
-              <div className="font-bold text-xl text-gray-800 mb-3 flex items-center">
-                <span className="mr-2">💻</span> Theory + Lab (50% CA + 50% ESE)
+              <div className="font-bold text-base sm:text-lg lg:text-xl text-gray-800 mb-3 flex items-center">
+                <span className="mr-2 text-lg">💻</span> Theory + Lab (50% CA + 50% ESE)
               </div>
-              <p className="text-sm text-gray-700 mb-4">
+              <p className="text-xs sm:text-sm text-gray-700 mb-4">
                 <span className="font-semibold">Typically for:</span> Data Structures, Web Technologies.
               </p>
-              <div className="grid md:grid-cols-2 gap-4 text-sm">
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="font-semibold text-gray-700">Continuous Assessment (50 Marks)</div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                  <div className="font-semibold text-gray-700 text-xs sm:text-sm">Continuous Assessment (50 Marks)</div>
                   <ul className="list-disc list-inside text-xs text-gray-600 mt-2 space-y-1">
                     <li>Theory Tests: 25 marks (50%)</li>
                     <li>Lab Work & Test: 25 marks (50%)</li>
                   </ul>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="font-semibold text-gray-700">End Semester Exam (50 Marks)</div>
+                <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                  <div className="font-semibold text-gray-700 text-xs sm:text-sm">End Semester Exam (50 Marks)</div>
                   <ul className="list-disc list-inside text-xs text-gray-600 mt-2 space-y-1">
                     <li>Components based on L-T-P structure</li>
                     <li>Minimum 45% required in each component</li>
@@ -229,26 +228,26 @@ const AnnaUniversityMarkingSystem = () => {
 
     
             <motion.div 
-              className="p-6 rounded-xl border-2 animate-slide-in" 
+              className="p-4 sm:p-6 rounded-xl border-2 animate-slide-in" 
               style={{ backgroundColor: '#ECFAE5', borderColor: '#16A085' }}
               whileHover={{ scale: 1.02, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
             >
-              <div className="font-bold text-xl text-gray-800 mb-3 flex items-center">
-                <span className="mr-2">🔬</span> Laboratory Courses (60% CA + 40% ESE)
+              <div className="font-bold text-base sm:text-lg lg:text-xl text-gray-800 mb-3 flex items-center">
+                <span className="mr-2 text-lg">🔬</span> Laboratory Courses (60% CA + 40% ESE)
               </div>
-              <p className="text-sm text-gray-700 mb-4">
+              <p className="text-xs sm:text-sm text-gray-700 mb-4">
                 <span className="font-semibold">Typically for:</span> Advanced Data Structures Lab, Web Technologies Lab.
               </p>
-              <div className="grid md:grid-cols-2 gap-4 text-sm">
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="font-semibold text-gray-700">Continuous Assessment (60 Marks)</div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                  <div className="font-semibold text-gray-700 text-xs sm:text-sm">Continuous Assessment (60 Marks)</div>
                   <ul className="list-disc list-inside text-xs text-gray-600 mt-2 space-y-1">
                     <li>Lab Experiments: 45 marks (75%)</li>
                     <li>Midterm Test: 15 marks (25%)</li>
                   </ul>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="font-semibold text-gray-700">End Semester Exam (40 Marks)</div>
+                <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                  <div className="font-semibold text-gray-700 text-xs sm:text-sm">End Semester Exam (40 Marks)</div>
                   <ul className="list-disc list-inside text-xs text-gray-600 mt-2 space-y-1">
                     <li>Practical Examination: 40 marks</li>
                     <li>Includes a Viva-Voce session</li>
@@ -259,27 +258,27 @@ const AnnaUniversityMarkingSystem = () => {
             
             {/* Project Work */}
             <motion.div 
-              className="p-6 rounded-xl border-2 animate-slide-in" 
+              className="p-4 sm:p-6 rounded-xl border-2 animate-slide-in" 
               style={{ backgroundColor: '#DDF6D2', borderColor: '#16A085' }}
               whileHover={{ scale: 1.02, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
             >
-              <div className="font-bold text-xl text-gray-800 mb-3 flex items-center">
-                <span className="mr-2">🎯</span> Project Work (60% Internal + 40% External)
+              <div className="font-bold text-base sm:text-lg lg:text-xl text-gray-800 mb-3 flex items-center">
+                <span className="mr-2 text-lg">🎯</span> Project Work (60% Internal + 40% External)
               </div>
-              <p className="text-sm text-gray-700 mb-4">
+              <p className="text-xs sm:text-sm text-gray-700 mb-4">
                 <span className="font-semibold">Typically for:</span> Mini Project, Final Year Project.
               </p>
-              <div className="grid md:grid-cols-2 gap-4 text-sm">
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="font-semibold text-gray-700">Internal Reviews (60 Marks)</div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                  <div className="font-semibold text-gray-700 text-xs sm:text-sm">Internal Reviews (60 Marks)</div>
                   <ul className="list-disc list-inside text-xs text-gray-600 mt-2 space-y-1">
                     <li>Review 1: 10 marks</li>
                     <li>Review 2: 20 marks</li>
                     <li>Review 3: 30 marks</li>
                   </ul>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="font-semibold text-gray-700">External Evaluation (40 Marks)</div>
+                <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                  <div className="font-semibold text-gray-700 text-xs sm:text-sm">External Evaluation (40 Marks)</div>
                   <ul className="list-disc list-inside text-xs text-gray-600 mt-2 space-y-1">
                     <li>Project Report: 10 marks</li>
                     <li>Viva-Voce: 20 marks</li>
@@ -293,23 +292,23 @@ const AnnaUniversityMarkingSystem = () => {
         
         {/* Grade System */}
         <div 
-          className="bg-white rounded-xl shadow-lg p-8 mb-8 animate-fadeInUp"
+          className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8 animate-fadeInUp"
         >
-          <div className="flex items-center mb-6">
-            <Award className="h-8 w-8 mr-3" style={{ color: '#16A085' }} />
-            <h2 className="text-3xl font-bold text-gray-800 font-serif">
+          <div className="flex items-center mb-4 sm:mb-6">
+            <Award className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 flex-shrink-0" style={{ color: '#16A085' }} />
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800 font-serif leading-tight">
               Grade Point System
             </h2>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300">
+          <div className="overflow-x-auto -mx-2 sm:mx-0">
+            <table className="w-full border-collapse border border-gray-300 min-w-[500px]">
               <thead>
                 <tr style={{ backgroundColor: '#ECFAE5' }}>
-                  <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Letter Grade</th>
-                  <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Grade Points</th>
-                  <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Marks Range</th>
-                  <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Performance</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Letter Grade</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Grade Points</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Marks Range</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm">Performance</th>
                 </tr>
               </thead>
               <tbody>
@@ -318,16 +317,16 @@ const AnnaUniversityMarkingSystem = () => {
                     key={grade.grade} 
                     className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
                   >
-                    <td className="border border-gray-300 px-4 py-3 font-bold text-lg font-mono">
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 sm:py-3 font-bold text-sm sm:text-lg font-mono">
                       {grade.grade}
                     </td>
-                    <td className="border border-gray-300 px-4 py-3 font-semibold text-center">
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 sm:py-3 font-semibold text-center text-xs sm:text-sm">
                       {grade.points}
                     </td>
-                    <td className="border border-gray-300 px-4 py-3 font-mono">
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 sm:py-3 font-mono text-xs sm:text-sm">
                       {grade.range}
                     </td>
-                    <td className="border border-gray-300 px-4 py-3">
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">
                       {grade.grade === 'O' && 'Outstanding'}
                       {grade.grade === 'A+' && 'Excellent'}
                       {grade.grade === 'A' && 'Very Good'}
@@ -345,25 +344,25 @@ const AnnaUniversityMarkingSystem = () => {
         
         {/* CGPA Calculator */}
         <div 
-          className="bg-white rounded-xl shadow-lg p-8 animate-fadeInUp"
+          className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 animate-fadeInUp"
         >
-          <div className="flex items-center mb-6">
-            <Calculator className="h-8 w-8 mr-3" style={{ color: '#16A085' }} />
-            <h2 className="text-3xl font-bold text-gray-800 font-serif">
+          <div className="flex items-center mb-4 sm:mb-6">
+            <Calculator className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 flex-shrink-0" style={{ color: '#16A085' }} />
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800 font-serif leading-tight">
               GPA & CGPA Calculator
             </h2>
           </div>
           
-          <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: '#DDF6D2' }}>
-            <h3 className="text-xl font-bold text-gray-800 mb-3 font-serif">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg" style={{ backgroundColor: '#DDF6D2' }}>
+            <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 mb-3 font-serif">
               1. Edit Grades per Semester
             </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
               {[1, 2, 3, 4].map(sem => (
                 <button
                   key={sem}
                   onClick={() => handleTabClick(sem)}
-                  className={`px-4 py-2 rounded-lg font-bold transition-colors ${activeTab === sem ? 'bg-[#16A085] text-white' : 'bg-white text-gray-800 hover:bg-gray-100'}`}
+                  className={`px-3 sm:px-4 py-2 rounded-lg font-bold transition-colors text-xs sm:text-sm ${activeTab === sem ? 'bg-[#16A085] text-white' : 'bg-white text-gray-800 hover:bg-gray-100'}`}
                 >
                   Semester {sem}
                 </button>
@@ -372,51 +371,53 @@ const AnnaUniversityMarkingSystem = () => {
           </div>
 
           {displayedCourses.length > 0 && (
-            <div className="space-y-4 mb-6">
-              <h4 className="text-lg font-bold text-gray-800">Editing Courses for Semester {activeTab}</h4>
+            <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+              <h4 className="text-sm sm:text-base lg:text-lg font-bold text-gray-800">Editing Courses for Semester {activeTab}</h4>
               {displayedCourses.map((course, index) => (
                 <motion.div 
                   key={`${activeTab}-${course.id}`} 
-                  className="p-4 border rounded-lg animate-slide-in" 
+                  className="p-3 sm:p-4 border rounded-lg animate-slide-in" 
                   style={{ backgroundColor: '#ECFAE5', borderColor: '#DDF6D2' }}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.05 }}
                 >
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <div className="flex-1 min-w-48">
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">
                         Course
                       </label>
-                      <div className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md font-medium text-gray-800">
+                      <div className="w-full px-2 sm:px-3 py-2 bg-white border border-gray-300 rounded-md font-medium text-gray-800 text-xs sm:text-sm break-words">
                         {course.name}
                       </div>
                     </div>
                     
-                    <div className="w-24">
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">Credits</label>
-                      <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-center font-semibold font-mono">
-                        {course.credits}
+                    <div className="flex gap-2 sm:gap-4">
+                      <div className="w-16 sm:w-20">
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Credits</label>
+                        <div className="w-full px-2 sm:px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-center font-semibold font-mono text-xs sm:text-sm">
+                          {course.credits}
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="w-24">
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">Grade</label>
-                      <select
-                        value={course.grade}
-                        onChange={(e) => updateCourse(course.id, 'grade', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16A085] font-mono"
-                      >
-                        {gradeOptions.map(grade => (
-                          <option key={grade.grade} value={grade.grade}>{grade.grade}</option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div className="w-20">
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">Points</label>
-                      <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-center font-semibold font-mono">
-                        {course.gradePoints}
+                      
+                      <div className="w-16 sm:w-20">
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Grade</label>
+                        <select
+                          value={course.grade}
+                          onChange={(e) => updateCourse(course.id, 'grade', e.target.value)}
+                          className="w-full px-1 sm:px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16A085] font-mono text-xs sm:text-sm"
+                        >
+                          {gradeOptions.map(grade => (
+                            <option key={grade.grade} value={grade.grade}>{grade.grade}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className="w-16 sm:w-20">
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Points</label>
+                        <div className="px-2 sm:px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-center font-semibold font-mono text-xs sm:text-sm">
+                          {course.gradePoints}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -425,11 +426,11 @@ const AnnaUniversityMarkingSystem = () => {
             </div>
           )}
           
-          <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: '#ECFAE5' }}>
-            <h3 className="text-xl font-bold text-gray-800 mb-3 font-serif">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg" style={{ backgroundColor: '#ECFAE5' }}>
+            <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 mb-3 font-serif">
               2. Select Semesters for CGPA
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               {[1, 2, 3, 4].map(sem => (
                 <div key={sem} className="flex items-center">
                   <input
@@ -438,10 +439,10 @@ const AnnaUniversityMarkingSystem = () => {
                     checked={selectedSemesters.includes(sem)}
                     onChange={() => handleSemesterCheck(sem)}
                     disabled={!allSemesterCourses[sem]}
-                    className="h-5 w-5 rounded form-checkbox"
+                    className="h-4 w-4 sm:h-5 sm:w-5 rounded form-checkbox"
                     style={{ borderColor: '#16A085', color: '#16A085' }}
                   />
-                  <label htmlFor={`sem-check-${sem}`} className={`ml-2 text-lg font-bold ${!allSemesterCourses[sem] ? 'text-gray-400' : 'text-gray-800'}`}>
+                  <label htmlFor={`sem-check-${sem}`} className={`ml-2 text-sm sm:text-base lg:text-lg font-bold ${!allSemesterCourses[sem] ? 'text-gray-400' : 'text-gray-800'}`}>
                     Semester {sem}
                   </label>
                 </div>
@@ -449,15 +450,15 @@ const AnnaUniversityMarkingSystem = () => {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <motion.div 
-              className="p-6 rounded-lg text-center border-2" 
+              className="p-4 sm:p-6 rounded-lg text-center border-2" 
               style={{ backgroundColor: '#DDF6D2', borderColor: '#16A085' }}
               whileHover={{ scale: 1.02, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
             >
-              <div className="text-lg font-semibold text-gray-700 mb-2">GPA for Semester {activeTab || 'N/A'}</div>
+              <div className="text-sm sm:text-base lg:text-lg font-semibold text-gray-700 mb-2">GPA for Semester {activeTab || 'N/A'}</div>
               <motion.div 
-                className="text-4xl font-bold font-mono" 
+                className="text-2xl sm:text-3xl lg:text-4xl font-bold font-mono" 
                 style={{ color: '#16A085' }}
                 key={`gpa-${activeTab}`}
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -466,17 +467,17 @@ const AnnaUniversityMarkingSystem = () => {
               >
                 {activeTab ? calculateGPA(activeTab) : '0.00'}
               </motion.div>
-              <div className="text-sm text-gray-600 mt-2">out of 10.00</div>
+              <div className="text-xs sm:text-sm text-gray-600 mt-2">out of 10.00</div>
             </motion.div>
             
             <motion.div 
-              className="p-6 rounded-lg text-center border-2" 
+              className="p-4 sm:p-6 rounded-lg text-center border-2" 
               style={{ backgroundColor: '#ECFAE5', borderColor: '#DDF6D2' }}
               whileHover={{ scale: 1.02, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
             >
-              <div className="text-lg font-semibold text-gray-700 mb-2">Cumulative CGPA</div>
+              <div className="text-sm sm:text-base lg:text-lg font-semibold text-gray-700 mb-2">Cumulative CGPA</div>
               <motion.div 
-                className="text-4xl font-bold font-mono" 
+                className="text-2xl sm:text-3xl lg:text-4xl font-bold font-mono" 
                 style={{ color: '#16A085' }}
                 key={`cgpa-${selectedSemesters.length}`}
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -485,7 +486,7 @@ const AnnaUniversityMarkingSystem = () => {
               >
                 {calculateCGPA()}
               </motion.div>
-              <div className="text-sm text-gray-600 mt-2">
+              <div className="text-xs sm:text-sm text-gray-600 mt-2">
                 for semesters: 
                 <span className="font-mono">{selectedSemesters.join(', ') || 'N/A'}</span>
               </div>

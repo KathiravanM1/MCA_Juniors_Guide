@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, Menu, X, Twitter, Github, Linkedin, ArrowUp, LogOut, Shield, Settings, Users, Database, BarChart3, FileText } from 'lucide-react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 // --- DATA ---
 const adminNavLinks = [
@@ -13,11 +14,11 @@ const AdminHeader = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
+    const { logout } = useAuth();
     
     const handleLogout = () => {
-        localStorage.removeItem('userToken');
-        localStorage.removeItem('adminToken');
-        navigate('/login');
+        logout();
+        navigate('/', { replace: true });
     };
 
     const isActive = (path) => {
@@ -176,7 +177,37 @@ const AdminFooter = () => {
 };
 
 export default function AdminLayout() {
+    const { isAuthenticated, isLoading } = useAuth();
+    const navigate = useNavigate();
     const [showScrollTop, setShowScrollTop] = useState(false);
+
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            navigate('/', { replace: true });
+        }
+    }, [isAuthenticated, isLoading, navigate]);
+
+    useEffect(() => {
+        const handlePopState = () => {
+            if (!isAuthenticated) {
+                navigate('/', { replace: true });
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [isAuthenticated, navigate]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return null;
+    }
 
     useEffect(() => {
         let timeoutId;

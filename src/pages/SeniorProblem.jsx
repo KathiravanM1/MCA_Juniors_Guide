@@ -123,7 +123,7 @@ export default function PostProblemPage() {
                                     </div>
                                     
                                     <div>
-                                        <label htmlFor="subCategory" className="block text-sm font-bold text-gray-700 mb-2">Specific {formData.category.slice(0,-1)}</label>
+                                        <label htmlFor="subCategory" className="block text-sm font-bold text-gray-700 mb-2">Specific Category</label>
                                         <input type="text" name="subCategory" id="subCategory" required value={formData.subCategory} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder={`e.g., ${formData.category === 'topics' ? 'Arrays' : formData.category === 'company' ? 'Google' : formData.category === 'language' ? 'Python' : 'AI/ML'}`} />
                                     </div>
 

@@ -1,7 +1,8 @@
-import { memo, useMemo, lazy, Suspense } from 'react';
+import { memo, useMemo, lazy, Suspense, useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Rocket, BookOpen, FileText, Lightbulb, Zap, Target, Sparkles, CheckCircle, ArrowRight, Star, Users, TrendingUp } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 // Lazy load components for better performance
 // const StatsSection = lazy(() => import('../components/StatsSection'));
@@ -175,7 +176,7 @@ const HeroSection = memo(({ shouldReduce }) => {
       initial="hidden"
       animate="visible"
       variants={variants.container}
-      className="pt-40 pb-24 sm:pt-48 sm:pb-32 text-center"
+      className="pt-10 pb-24 sm:pt-48 sm:pb-32 text-center"
     >
 
       
@@ -234,6 +235,27 @@ HeroSection.displayName = 'HeroSection';
 
 export default function LandingPage() {
   const shouldReduce = useReducedMotion();
+  const { isAuthenticated, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to student page if user is authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate('/student');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen font-sans text-gray-800 overflow-x-hidden">
@@ -248,8 +270,18 @@ export default function LandingPage() {
       
       <div className="relative z-10">
       <HeroSection shouldReduce={shouldReduce} />
+      {isAuthenticated && (
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={logout}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      )}
       
-      <main id="features" className="py-16 sm:py-24 md:py-32 bg-gradient-to-b from-#DDF6D2 to-white ">
+      <main id="features" className="sm:py-24 md:py-32 bg-gradient-to-b from-#DDF6D2 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 md:mb-24">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-serif text-gray-900 px-4">Everything You Need, All in One Place</h2>

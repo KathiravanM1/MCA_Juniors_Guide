@@ -1,235 +1,364 @@
-import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import anime from "animejs/lib/anime.es.js";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Text } from "@react-three/drei";
-import Particles from "@tsparticles/react";
-import { FaUserAlt } from "react-icons/fa";
-import { FcGoogle } from "react-icons/fc";
-import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
-const PALETTE = {
-  lightGreen: "#a8e6a3",
-  midGreen: "#8fdba1",
-  white: "#ffffff",
-  grayDark: "#2f2f2f",
-  grayMuted: "#6b7280",
+
+// Animated 3D-style Logo Component
+const AnimatedLogo = () => {
+  const logoTransition = useMemo(() => ({
+    type: "spring",
+    stiffness: 100,
+    damping: 15,
+    duration: 0.8
+  }), []);
+
+  const textTransition = useMemo(() => ({ delay: 0.5 }), []);
+
+  return (
+    <motion.div 
+      className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto mb-6 sm:mb-8"
+      initial={{ scale: 0, rotate: -180 }}
+      animate={{ scale: 1, rotate: 0 }}
+      transition={logoTransition}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-#DDF6D2 to-#ECFAE5 rounded-xl sm:rounded-2xl shadow-2xl transform rotate-3">
+        <div className="absolute inset-1 bg-gradient-to-br from-#ECFAE5 to-#DDF6D2 rounded-lg sm:rounded-xl"></div>
+      </div>
+      <div className="relative w-full h-full bg-gradient-to-br from-#DDF6D2 to-#ECFAE5 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-xl">
+        <motion.span 
+          className="text-lg sm:text-2xl md:text-3xl font-black text-gray-800 tracking-tight font-serif"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={textTransition}
+        >
+          MCA
+        </motion.span>
+      </div>
+    </motion.div>
+  );
 };
 
-// MagicInput Component
-function MagicInput({ id, label, type = "text", value, onChange, placeholder }) {
+// Floating Particles Background
+const FloatingParticles = () => {
+  const particles = useMemo(() => 
+    Array.from({ length: 15 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 3 + 1.5,
+      delay: Math.random() * 5,
+      duration: 6 + Math.random() * 4,
+    })), []
+  );
+
   return (
-    <div className="relative">
-      <input
-        id={id}
-        name={id}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder || ""}
-        className="peer w-full bg-white/5 text-gray-900 placeholder-transparent rounded-xl px-4 py-3 border border-gray-200 focus:outline-none"
-        style={{ background: PALETTE.white + "0A" }}
-        aria-label={label}
-      />
-      <label
-        htmlFor={id}
-        className="absolute left-4 -top-2 px-1 text-xs pointer-events-none transition-all duration-200"
-        style={{ color: PALETTE.grayDark }}
-      >
-        {label}
-      </label>
-      <div
-        className="absolute inset-0 rounded-xl pointer-events-none"
-        style={{ boxShadow: "0 6px 18px rgba(168,230,163,0.06)" }}
-      />
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map((particle) => (
+        <motion.div
+          key={particle.id}
+          className="absolute bg-#DDF6D2 rounded-full opacity-30"
+          style={{
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            width: `${particle.size}px`,
+            height: `${particle.size}px`,
+          }}
+          animate={{
+            y: [-10, 10, -10],
+            x: [-5, 5, -5],
+            opacity: [0.3, 0.6, 0.3],
+          }}
+          transition={{
+            duration: particle.duration,
+            repeat: Infinity,
+            delay: particle.delay,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
     </div>
   );
-}
-
-// 3D Emblem
-function Emblem3D({ color = PALETTE.lightGreen }) {
-  const group = useRef();
-  useFrame((state) => {
-    const t = state.clock.getElapsedTime();
-    if (group.current) group.current.rotation.y = t * 0.18;
-    const s = 1 + Math.sin(t * 0.9) * 0.01;
-    if (group.current) group.current.scale.setScalar(s);
-  });
-  return (
-    <group ref={group} position={[0, 0, 0]}>
-      <Text
-        fontSize={1.5}
-        fontWeight={700}
-        color={color}
-        anchorX="center"
-        anchorY="middle"
-        bevelEnabled
-        bevelSize={0.02}
-        bevelThickness={0.02}
-      >
-        MCA
-      </Text>
-    </group>
-  );
-}
-
-// Particles Background
-function ParticlesBg() {
-  const options = {
-    fpsLimit: 60,
-    particles: {
-      number: { value: 45, density: { enable: true, area: 800 } },
-      color: { value: [PALETTE.lightGreen, PALETTE.white, PALETTE.grayMuted] },
-      shape: { type: "circle" },
-      opacity: { value: { min: 0.2, max: 0.9 } },
-      size: { value: { min: 0.8, max: 3 } },
-      move: { enable: true, speed: 0.8, outModes: "out" },
-      links: { enable: false },
-    },
-    interactivity: {
-      events: { onHover: { enable: true, mode: "repulse" } },
-      modes: { repulse: { distance: 120 } },
-    },
-    detectRetina: true,
-    background: { color: "transparent" },
-  };
-  return <Particles id="tsparticles" options={options} className="absolute inset-0 -z-10" />;
-}
+};
 
 // Main Login Page
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [pw, setPw] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const headingRef = useRef();
+  const { isAuthenticated, isLoading, login, user } = useAuth();
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const brandingTransition = useMemo(() => ({ duration: 0.8 }), []);
+  const titleTransition = useMemo(() => ({ delay: 0.4, duration: 0.6 }), []);
+  const descTransition = useMemo(() => ({ delay: 0.6, duration: 0.6 }), []);
 
+  // Role-based redirection
+  const getRedirectPath = (userRole) => {
+    switch (userRole) {
+      case 'admin':
+        return '/admin';
+      case 'senior':
+        return '/senior';
+      default:
+        return '/student';
+    }
+  };
+
+  // Redirect based on user role if authenticated
   useEffect(() => {
-    if (!headingRef.current) return;
-    const chars = headingRef.current.querySelectorAll(".char");
-    anime.remove(chars);
-    anime({
-      targets: chars,
-      translateY: [18, 0],
-      opacity: [0, 1],
-      easing: "cubicBezier(.22,.9,.29,1)",
-      duration: 600,
-      delay: anime.stagger(30),
-    });
-  }, []);
-
-  function validateForm() {
-    if (!email.includes("@")) {
-      setError("Please enter a valid email.");
-      return false;
+    if (!isLoading && isAuthenticated && user) {
+      const redirectPath = getRedirectPath(user.role);
+      navigate(redirectPath);
     }
-    if (!pw.trim()) {
-      setError("Please enter your password.");
-      return false;
-    }
-    setError("");
-    navigate("/student");
-    return true;
-  }
+  }, [isAuthenticated, isLoading, user, navigate]);
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
-    setBusy(true);
-    try {
-      await new Promise((r) => setTimeout(r, 900));
-      anime({
-        targets: ".login-card",
-        scale: [1, 1.02, 1],
-        duration: 600,
-        easing: "easeInOutQuad",
-      });
-      alert("Simulated login success — hook backend to complete flow.");
-    } catch (err) {
-      setError(err.message || "Login failed");
-    } finally {
-      setBusy(false);
+    setLoading(true);
+    setError('');
+    
+    const result = await login(formData.email, formData.password);
+    
+    if (result.success) {
+      const redirectPath = getRedirectPath(result.user.role);
+      navigate(redirectPath);
+    } else {
+      setError(result.message);
     }
+    setLoading(false);
+  };
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-gradient-to-b from-#DDF6D2 to-white font-sans relative"
-      style={{ fontFamily: "Poppins, sans-serif" }}
-    >
-      <ParticlesBg />
-      <div className="w-full max-w-6xl mx-4 sm:mx-6 p-4 sm:p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center">
-          {/* LEFT: 3D Stage */}
-          <div className="hidden lg:flex flex-col items-center justify-center gap-6">
-            <div className="w-150 h-100 rounded-3xl overflow-hidden flex items-center justify-center">
-              <Canvas camera={{ position: [0, 0, 4.2], fov: 50 }} style={{ height: "150%", width: "150%" }}>
-                <ambientLight intensity={0.6} />
-                <directionalLight position={[5, 5, 5]} intensity={0.8} />
-                <Emblem3D color={PALETTE.lightGreen} />
-                <OrbitControls enableZoom={false} enablePan={false} autoRotate={false} />
-              </Canvas>
-            </div>
-          </div>
-
-          {/* RIGHT: Login Card */}
-          <motion.div
-            className="login-card bg-white rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-6 border border-gray-100 w-full max-w-md mx-auto lg:max-w-none"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+    <div className="min-h-screen bg-gradient-to-br from-#DDF6D2 to-white relative overflow-hidden font-space">
+      {/* Animated Background Elements */}
+      <FloatingParticles />
+      
+      {/* Gradient Orbs - Responsive sizes */}
+      <div className="absolute top-0 -left-4 w-48 h-48 sm:w-72 sm:h-72 bg-#ECFAE5 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>
+      <div className="absolute top-0 -right-4 w-48 h-48 sm:w-72 sm:h-72 bg-#DDF6D2 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse animation-delay-2000"></div>
+      <div className="absolute -bottom-8 left-10 sm:left-20 w-48 h-48 sm:w-72 sm:h-72 bg-#ECFAE5 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse animation-delay-4000"></div>
+      
+      {/* Main Content */}
+      <div className="relative z-10 min-h-screen">
+        {/* Desktop Layout */}
+        <div className="hidden lg:grid lg:grid-cols-2 lg:min-h-screen">
+          {/* Left Side - Branding */}
+          <motion.div 
+            className="flex flex-col items-center justify-center p-8 xl:p-12 bg-gradient-to-br from-#ECFAE5/50 to-#DDF6D2/50 backdrop-blur-sm"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={brandingTransition}
           >
-            {/* Header */}
-            <div className="flex items-start justify-between gap-4 mb-4 sm:mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center" style={{ background: PALETTE.lightGreen }}>
-                  <FaUserAlt className="text-white" />
+            <div className="max-w-md text-center">
+              <AnimatedLogo />
+              <motion.h1 
+                className="text-3xl xl:text-4xl font-bold text-gray-800 mb-4 font-serif"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={titleTransition}
+              >
+                Vidivu
+              </motion.h1>
+              <motion.p 
+                className="text-base xl:text-lg text-gray-600 leading-relaxed font-space"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={descTransition}
+              >
+                Your gateway to seamless digital experiences. Connect, collaborate, and create with our comprehensive platform.
+              </motion.p>
+              
+              <motion.div 
+                className="mt-8 xl:mt-12 grid grid-cols-3 gap-4 xl:gap-6 text-center"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                // transition={featuresTransition}
+              >
+                <div>
+                  <div className="w-10 h-10 xl:w-12 xl:h-12 bg-#ECFAE5 rounded-lg xl:rounded-xl flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-5 h-5 xl:w-6 xl:h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xs xl:text-sm font-semibold text-gray-800 font-space">Secure</h3>
                 </div>
                 <div>
-                  <div className="text-base sm:text-lg font-semibold text-gray-800">Sign In</div>
+                  <div className="w-10 h-10 xl:w-12 xl:h-12 bg-#ECFAE5 rounded-lg xl:rounded-xl flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-5 h-5 xl:w-6 xl:h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xs xl:text-sm font-semibold text-gray-800 font-space">Fast</h3>
                 </div>
-              </div>
+                <div>
+                  <div className="w-10 h-10 xl:w-12 xl:h-12 bg-#ECFAE5 rounded-lg xl:rounded-xl flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-5 h-5 xl:w-6 xl:h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xs xl:text-sm font-semibold text-gray-800 font-space">Reliable</h3>
+                </div>
+              </motion.div>
             </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-              <MagicInput id="email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@college.edu" />
-
-              <MagicInput id="pw" label="Password" type="password" value={pw} onChange={setPw} placeholder="Your password" />
-
-              {error && <div className="text-sm text-red-500">{error}</div>}
-
-              <div className="flex items-center justify-between mt-2 sm:mt-3">
-                <a href="/forgot-password" className="text-xs sm:text-sm text-[#8fdba1] font-semibold">Forgot password?</a>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 mt-4 sm:mt-6">
+          </motion.div>
+          
+          {/* Right Side - Login Form */}
+          <div className="flex items-center justify-center p-6 xl:p-12">
+            <div className="w-full max-w-md">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
+                  <p className="text-gray-600 mt-2">Sign in to your account</p>
+                </div>
+                
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+                    {error}
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Enter your email"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Enter your password"
+                  />
+                </div>
+                
                 <button
                   type="submit"
-                  disabled={busy}
-                  className="px-4 py-2 sm:px-5 sm:py-3 rounded-xl font-semibold text-white text-sm sm:text-base w-full sm:w-auto"
-                  style={{ background: PALETTE.lightGreen }}
+                  disabled={loading}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium py-3 px-4 rounded-lg transition-colors"
                 >
-                  {busy ? "Authenticating…" : "Login"}
+                  {loading ? 'Signing in...' : 'Sign In'}
                 </button>
-              </div>
-
-              {/* <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-gray-500">
-                or sign in with{" "}
-                <button type="button" onClick={() => alert("Google placeholder")} className="inline-flex items-center gap-2 ml-1">
-                  <FcGoogle /> Google
+                
+                <p className="text-center text-gray-600">
+                  Don't have an account?{' '}
+                  <Link to="/signup" className="text-green-600 hover:text-green-700 font-medium">
+                    Sign up
+                  </Link>
+                </p>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile Layout */}
+        <div className="lg:hidden min-h-screen flex flex-col items-center justify-center p-3 sm:p-4">
+          <div className="w-full max-w-sm">
+            <AnimatedLogo />
+            <motion.h1 
+              className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 text-center font-serif"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={titleTransition}
+            >
+              MCA Platform
+            </motion.h1>
+            <motion.p 
+              className="text-sm sm:text-base text-gray-600 text-center mb-6 sm:mb-8 font-space"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={descTransition}
+            >
+              Welcome to your digital workspace
+            </motion.p>
+            <div className="transform scale-95 sm:scale-100">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">Welcome Back</h2>
+                </div>
+                
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded text-sm">
+                    {error}
+                  </div>
+                )}
+                
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Email"
+                />
+                
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Password"
+                />
+                
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium py-2 px-4 rounded transition-colors"
+                >
+                  {loading ? 'Signing in...' : 'Sign In'}
                 </button>
-              </div> */}
-
-              <div className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-gray-400">
-                New here? 
-                <Link to={"/signup"} className="text-[#8fdba1] font-semibold">Create account</Link>
-              </div>
-            </form>
-          </motion.div>
+                
+                <p className="text-center text-sm text-gray-600">
+                  Don't have an account?{' '}
+                  <Link to="/signup" className="text-green-600 hover:text-green-700 font-medium">
+                    Sign up
+                  </Link>
+                </p>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Global Styles */}
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+        
+        .font-space { font-family: 'Space Grotesk', sans-serif; }
+        .font-serif { font-family: 'Instrument Serif', serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+      `}</style>
     </div>
   );
 }
