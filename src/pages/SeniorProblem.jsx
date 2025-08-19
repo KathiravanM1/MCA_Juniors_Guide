@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PlusCircle, CheckCircle, Loader, Star } from 'lucide-react';
+import { PlusCircle, CheckCircle, Loader, Star, AlertCircle } from 'lucide-react';
+import { problemService } from '../services/problemService';
 
 // --- MAIN COMPONENT ---
 export default function PostProblemPage() {
@@ -15,6 +16,7 @@ export default function PostProblemPage() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [error, setError] = useState('');
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,29 +25,34 @@ export default function PostProblemPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setError('');
         
-        // Simulate API call to the backend
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // In a real app, you would send this data to your database
-        const sanitizedData = {
-            title: formData.title.replace(/[<>"'&]/g, ''),
-            description: formData.description.replace(/[<>"'&]/g, ''),
-            difficulty: formData.difficulty,
-            category: formData.category,
-            subCategory: formData.subCategory.replace(/[<>"'&]/g, ''),
-            tags: formData.tags.split(',').map(tag => tag.trim().replace(/[<>"'&]/g, ''))
-        };
-        console.log("New Problem Submitted:", sanitizedData);
+        try {
+            const problemData = {
+                title: formData.title,
+                description: formData.description,
+                difficulty: formData.difficulty,
+                category: formData.category,
+                subCategory: formData.subCategory,
+                tags: formData.tags
+            };
 
-        setIsSubmitting(false);
-        setSubmitted(true);
-        
-        // Reset form and success message after a delay
-        setTimeout(() => {
-            setFormData({ title: "", description: "", difficulty: "Easy", category: "topics", subCategory: "", tags: "" });
-            setSubmitted(false);
-        }, 4000);
+            const response = await problemService.createProblem(problemData);
+            console.log("Problem created successfully:", response);
+
+            setSubmitted(true);
+            
+            // Reset form and success message after a delay
+            setTimeout(() => {
+                setFormData({ title: "", description: "", difficulty: "Easy", category: "topics", subCategory: "", tags: "" });
+                setSubmitted(false);
+            }, 4000);
+        } catch (error) {
+            console.error('Error creating problem:', error);
+            setError(error.message || 'Failed to submit problem. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     // --- Data for dropdowns ---
@@ -132,10 +139,30 @@ export default function PostProblemPage() {
                                         <input type="text" name="tags" id="tags" value={formData.tags} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., Array, Hash Table" />
                                     </div>
 
-                                    <div>
-                                        <button type="submit" disabled={isSubmitting} className="w-full flex items-center justify-center gap-3 px-4 py-4 font-bold text-white bg-gray-800 rounded-lg hover:bg-gray-900 disabled:bg-gray-400 transition-all transform hover:scale-105">
-                                            {isSubmitting ? <Loader className="w-5 h-5 animate-spin" /> : <PlusCircle className="w-5 h-5" />}
-                                            {isSubmitting ? "Submitting Problem..." : "Post Problem"}
+                                    {error && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3"
+                                        >
+                                            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                                            <p className="text-red-700 text-sm">{error}</p>
+                                        </motion.div>
+                                    )}
+
+                                    <div className='white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 rounded-lg transition-colors'>
+                                        <button type="submit" disabled={isSubmitting} className="flex items-center justify-center gap-2 w-full px-6 py-3 text-white font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            {isSubmitting ? (
+                                                <>
+                                                    <Loader className="w-5 h-5 animate-spin" />
+                                                    Submitting...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <PlusCircle className="w-5 h-5" />
+                                                    Post Problem
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </motion.form>
@@ -143,19 +170,50 @@ export default function PostProblemPage() {
                         </AnimatePresence>
                     </div>
 
-                    {/* Right Side: Live Preview */}
+                    {/* Right Side: Preview */}
                     <div className="lg:w-1/2 w-full">
-                        <div className="sticky top-28">
-                            <h3 className="text-lg font-bold text-gray-800 mb-4 text-center lg:text-left">Live Preview</h3>
-                            <div className="bg-gradient-to-br from-gray-800 to-gray-900 text-white p-6 rounded-2xl shadow-xl">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <Star className="w-6 h-6 text-yellow-400" />
-                                    <p className="font-inter text-sm font-semibold tracking-wider uppercase text-yellow-400">Featured Problem</p>
+                        <div className="bg-white rounded-2xl border border-gray-200 p-8 h-full">
+                            <h2 className="font-serif text-2xl font-bold text-gray-900 mb-6">Preview</h2>
+                            
+                            {formData.title || formData.description ? (
+                                <div className="space-y-4">
+                                    <div>
+                                        <h3 className="font-bold text-lg text-gray-900">{formData.title || 'Problem Title'}</h3>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${difficultyColors[formData.difficulty]}`}>
+                                                {formData.difficulty}
+                                            </span>
+                                            <span className="px-2 py-1 bg-blue-100 text-green-800 rounded-full text-xs font-medium">
+                                                {formData.subCategory || 'Category'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <p className="text-gray-700 whitespace-pre-wrap">{formData.description || 'Problem description will appear here...'}</p>
+                                    </div>
+                                    
+                                    {formData.tags && (
+                                        <div>
+                                            <h4 className="font-medium text-gray-900 mb-2">Tags:</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {formData.tags.split(',').map((tag, index) => (
+                                                    tag.trim() && (
+                                                        <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
+                                                            {tag.trim()}
+                                                        </span>
+                                                    )
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                                <h3 className="font-space font-bold text-2xl min-h-[32px]">{formData.title || "Problem Title"}</h3>
-                                <p className="font-inter text-base mt-2 opacity-80 leading-relaxed min-h-[48px] line-clamp-2">{formData.description || "A preview of the problem description will appear here."}</p>
-                                 <div className={`mt-4 text-sm font-medium px-2 py-0.5 rounded-full inline-block ${difficultyColors[formData.difficulty]}`}>{formData.difficulty}</div>
-                            </div>
+                            ) : (
+                                <div className="text-center text-gray-500">
+                                    <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                    <p>Fill out the form to see a preview of your problem</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -180,6 +180,10 @@ export default function SeniorLayout() {
     const navigate = useNavigate();
     const [showScrollTop, setShowScrollTop] = useState(false);
 
+    const scrollToTop = useCallback(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
+
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
             navigate('/', { replace: true });
@@ -196,18 +200,6 @@ export default function SeniorLayout() {
         return () => window.removeEventListener('popstate', handlePopState);
     }, [isAuthenticated, navigate]);
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-            </div>
-        );
-    }
-
-    if (!isAuthenticated) {
-        return null;
-    }
- 
     useEffect(() => {
         let timeoutId;
         const handleScroll = () => {
@@ -224,9 +216,17 @@ export default function SeniorLayout() {
         };
     }, []);
 
-    const scrollToTop = useCallback(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, []);
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return null;
+    }
 
     return (
         <div className="min-h-screen flex flex-col bg-white font-sans">
