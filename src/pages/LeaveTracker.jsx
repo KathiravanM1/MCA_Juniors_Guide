@@ -1,20 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, BookOpen, AlertTriangle, Plus, CheckCircle, XCircle, Trash2, Edit, X } from 'lucide-react';
+import { Calendar, BookOpen, AlertTriangle, Plus, CheckCircle, XCircle, Trash2, Edit, X, LogOut } from 'lucide-react';
+import LoginPage from '../components/LoginPage';
+import { getCurrentUser, logoutUser } from '../utils/sessionAuth';
+import { getCurrentUserData, addSubject, markAttendance, deleteSubject, updateAttendance, deleteAttendance, getMaxLeaveHours } from '../utils/attendanceDB';
 
-// --- CONFIGURATION & DATA ---
-
-// Helper function to calculate max leave hours based on credits
-const getMaxLeaveHours = (credits) => {
-    const creditValue = parseFloat(credits);
-    if (creditValue === 4.5) return 13;
-    if (creditValue === 4) return 11;
-    if (creditValue === 3) return 9;
-    if (creditValue === 1.5) return 6;
-    return Math.floor(creditValue * 3); // Fallback for other credit values
-};
-
-// --- UI COMPONENTS ---
 
 const EditAbsenceModal = ({ entry, onSave, onClose }) => {
     const [newHours, setNewHours] = useState(entry.hours);
@@ -74,6 +64,10 @@ const EditAbsenceModal = ({ entry, onSave, onClose }) => {
 
 // --- MAIN COMPONENT ---
 export default function AttendanceTracker() {
+    // Authentication state
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
+    
     // State for subjects the user is actively tracking (initially empty)
     const [trackedSubjects, setTrackedSubjects] = useState([]);
     
@@ -85,10 +79,45 @@ export default function AttendanceTracker() {
     const [hoursAbsent, setHoursAbsent] = useState('1');
     
     // State for the log of all absences
-    const [attendanceHistory, setAttendanceHistory] = useState([]);
+    const [ attendanceHistory, setAttendanceHistory] = useState([]);
     
     // State for the edit modal
     const [editingEntry, setEditingEntry] = useState(null);
+
+    // Check session on mount
+    useEffect(() => {
+        const rollNumber = getCurrentUser();
+        if (rollNumber) {
+            const userData = getCurrentUserData();
+            if (userData) {
+                setCurrentUser(userData);
+                setIsLoggedIn(true);
+                refreshData();
+            }
+        }
+    }, []);
+
+    const refreshData = () => {
+        const userData = getCurrentUserData();
+        if (userData) {
+            setTrackedSubjects(Object.values(userData.subjects));
+            setAttendanceHistory(userData.attendanceHistory);
+        }
+    };
+
+    const handleLogin = (userDoc) => {
+        setCurrentUser(userDoc);
+        setIsLoggedIn(true);
+        refreshData();
+    };
+
+    const handleLogout = () => {
+        logoutUser();
+        setIsLoggedIn(false);
+        setCurrentUser(null);
+        setTrackedSubjects([]);
+        setAttendanceHistory([]);
+    };
 
     // --- Core Logic ---
 
@@ -105,129 +134,75 @@ export default function AttendanceTracker() {
 
     const handleMarkAbsence = () => {
         const hours = parseInt(hoursAbsent);
-        let subjectIdentifier = selectedSubjectId;
-        let subjectNameForHistory = '';
-        let newSubjectWasAdded = false;
+        let subjectId = selectedSubjectId;
 
         if (isAddingNew) {
             if (!newSubjectName.trim() || !newSubjectCredits || !hoursAbsent) {
                 alert('Please fill in all new subject details and the hours.');
                 return;
             }
-            const normalizedNewName = newSubjectName.trim();
-            const existingSubject = trackedSubjects.find(s => s.name.toLowerCase() === normalizedNewName.toLowerCase());
-
+            
+            const existingSubject = trackedSubjects.find(s => s.name.toLowerCase() === newSubjectName.trim().toLowerCase());
             if (existingSubject) {
                 alert('A subject with this name already exists. Please select it from the dropdown.');
                 return;
             }
 
-            const newTrackedSubject = {
-                id: Date.now(), // Use a number for the ID
-                name: normalizedNewName,
-                credits: parseFloat(newSubjectCredits),
-                hoursAbsent: hours,
-            };
-            setTrackedSubjects([...trackedSubjects, newTrackedSubject]);
-            subjectIdentifier = newTrackedSubject.id;
-            subjectNameForHistory = newTrackedSubject.name;
-            newSubjectWasAdded = true;
-
-        } else {
-            if (!selectedSubjectId || !hoursAbsent) {
-                alert('Please select a subject and enter the hours.');
-                return;
-            }
-            // FIX: Compare numbers with numbers. The select value is a string.
-            const subjectIdAsNumber = parseInt(selectedSubjectId);
-            const existingSubjectIndex = trackedSubjects.findIndex(s => s.id === subjectIdAsNumber);
-
-            if (existingSubjectIndex > -1) {
-                const updatedTrackedSubjects = [...trackedSubjects];
-                const subjectToUpdate = updatedTrackedSubjects[existingSubjectIndex];
-                subjectToUpdate.hoursAbsent += hours;
-                subjectNameForHistory = subjectToUpdate.name;
-                setTrackedSubjects(updatedTrackedSubjects);
-            } else {
-                alert('Selected subject not found. Please try again.');
-                return;
+            const newSubject = addSubject({
+                name: newSubjectName.trim(),
+                credits: parseFloat(newSubjectCredits)
+            });
+            
+            if (newSubject) {
+                subjectId = newSubject.id;
             }
         }
 
-        // Add to history log
-        const newHistoryEntry = {
-            id: Date.now() + 1, // Ensure unique ID from subject
-            date: new Date().toISOString(),
-            subjectName: subjectNameForHistory,
-            hours,
-        };
-        setAttendanceHistory([newHistoryEntry, ...attendanceHistory]);
+        if (!subjectId) {
+            alert('Please select a subject.');
+            return;
+        }
+
+        markAttendance(subjectId, hours);
+        refreshData();
 
         // Reset form
         setHoursAbsent('1');
-        setSelectedSubjectId(newSubjectWasAdded ? String(subjectIdentifier) : '');
+        setSelectedSubjectId('');
         setIsAddingNew(false);
         setNewSubjectName('');
         setNewSubjectCredits('');
     };
     
-    const handleDeleteSubject = (subjectId) => {
-        const subjectToDelete = trackedSubjects.find(s => s.id === subjectId);
-        if (!subjectToDelete) return;
+    // Duplicate handleDeleteSubject removed to fix redeclaration error.
 
-        if (window.confirm(`Are you sure you want to delete "${subjectToDelete.name}" and all its records?`)) {
-            setTrackedSubjects(trackedSubjects.filter(s => s.id !== subjectId));
-            setAttendanceHistory(attendanceHistory.filter(h => h.subjectName !== subjectToDelete.name));
+    // Removed duplicate handleDeleteHistoryEntry and handleUpdateHistoryEntry to fix redeclaration error.
+
+    // --- Memoized Calculations for Performance ---
+
+    const handleDeleteSubject = (subjectId) => {
+        if (window.confirm('Are you sure you want to delete this subject and all its records?')) {
+            deleteSubject(subjectId);
+            refreshData();
         }
     };
 
     const handleDeleteHistoryEntry = (entryId) => {
-        const entryToDelete = attendanceHistory.find(h => h.id === entryId);
-        if (!entryToDelete) return;
-
-        const updatedTrackedSubjects = trackedSubjects.map(s => {
-            if (s.name === entryToDelete.subjectName) {
-                return { ...s, hoursAbsent: s.hoursAbsent - entryToDelete.hours };
-            }
-            return s;
-        }).filter(s => s.hoursAbsent > 0);
-
-        setTrackedSubjects(updatedTrackedSubjects);
-        setAttendanceHistory(attendanceHistory.filter(h => h.id !== entryId));
+        deleteAttendance(entryId);
+        refreshData();
     };
 
-    const handleUpdateHistoryEntry = (entryId, newHoursStr) => {
-        const newHours = parseInt(newHoursStr);
+    const handleUpdateHistoryEntry = (entryId, newHours) => {
         if (isNaN(newHours) || newHours < 1) {
-            alert("Please enter a valid number of hours (at least 1).");
+            alert('Please enter a valid number of hours (at least 1).');
             return;
         }
-
-        const entryToUpdate = attendanceHistory.find(h => h.id === entryId);
-        if (!entryToUpdate) return;
-
-        const hourDifference = newHours - entryToUpdate.hours;
-
-        const updatedTrackedSubjects = trackedSubjects.map(s => {
-            if (s.name === entryToUpdate.subjectName) {
-                return { ...s, hoursAbsent: s.hoursAbsent + hourDifference };
-            }
-            return s;
-        }).filter(s => s.hoursAbsent > 0);
-
-        setTrackedSubjects(updatedTrackedSubjects);
-
-        const updatedHistory = attendanceHistory.map(h => {
-            if (h.id === entryId) {
-                return { ...h, hours: newHours };
-            }
-            return h;
-        });
-        setAttendanceHistory(updatedHistory);
-        setEditingEntry(null); // Close modal
+        updateAttendance(entryId, newHours);
+        refreshData();
+        setEditingEntry(null);
     };
 
-    // --- Memoized Calculations for Performance ---
+    
 
     const overallStats = useMemo(() => {
         if (trackedSubjects.length === 0) {
@@ -243,7 +218,14 @@ export default function AttendanceTracker() {
         return { criticalCount };
     }, [trackedSubjects]);
 
+
+
+    if (!isLoggedIn) {
+        return <LoginPage onLogin={handleLogin} />;
+    }
+
     return (
+        <>
         <div className="min-h-screen bg-gradient-to-br from-[#ECFAE5] to-[#DDF6D2] font-sans">
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&family=Space+Grotesk:wght@400;500;700&display=swap');
@@ -257,18 +239,38 @@ export default function AttendanceTracker() {
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
+                    className="text-center mb-12 bg-white/80 backdrop-blur-sm p-8 sm:p-10 rounded-3xl shadow-lg relative"
+                >
+                    <button
+                        onClick={handleLogout}
+                        className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                    </button>
+                    <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4 font-serif">
+                        Attendance Tracker
+                    </h1>
+                    <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                        Welcome {currentUser?.rollNumber}! Track your attendance for the current semester.
+                    </p>
+                </motion.div>
+
+                {/* Stats & Form Grid */}
+                <motion.div
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
                     className="text-center mb-12 bg-white/80 backdrop-blur-sm p-8 sm:p-10 rounded-3xl shadow-lg"
                 >
                     <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4 font-serif">
                         Attendance Tracker
                     </h1>
                     <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                        Track your attendance for the current semester. Remember to stay above the required threshold to be eligible for your hall ticket.
+                        {currentUser ? `Welcome ${currentUser}! Track your attendance for the current semester.` : 'Select your user ID to start tracking attendance.'}
                     </p>
                 </motion.div>
 
-                {/* Stats & Form Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+
                     {/* Form Section */}
                     <motion.div 
                         initial={{ opacity: 0, x: -20 }}
@@ -443,6 +445,7 @@ export default function AttendanceTracker() {
                     />
                 )}
             </AnimatePresence>
-        </div>
+        </>
     );
 }
+

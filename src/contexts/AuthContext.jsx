@@ -93,10 +93,21 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (response.ok) {
-        localStorage.setItem('token', data.token);
-        setToken(data.token);
-        setUser(data.user);
-        return { success: true, user: data.user };
+        if (data.requiresApproval) {
+          // Senior registration pending approval
+          return { 
+            success: true, 
+            requiresApproval: true,
+            message: data.message,
+            user: data.user 
+          };
+        } else {
+          // Student registration or approved user
+          localStorage.setItem('token', data.token);
+          setToken(data.token);
+          setUser(data.user);
+          return { success: true, user: data.user };
+        }
       } else {
         const errorMessage = data.errors && data.errors.length > 0 
           ? data.errors.map(err => err.msg).join(', ')

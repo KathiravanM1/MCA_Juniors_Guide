@@ -85,7 +85,7 @@ const FloatingParticles = () => {
 export default function Login() {
   const { isAuthenticated, isLoading, login, user } = useAuth();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ email: '', password: '', loginAs: 'auto' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -93,13 +93,17 @@ export default function Login() {
   const titleTransition = useMemo(() => ({ delay: 0.4, duration: 0.6 }), []);
   const descTransition = useMemo(() => ({ delay: 0.6, duration: 0.6 }), []);
 
-  // Role-based redirection
-  const getRedirectPath = (userRole) => {
+  // Role-based redirection with login preference
+  const getRedirectPath = (userRole, loginAs = 'auto') => {
+    if (loginAs === 'student' && (userRole === 'senior' || userRole === 'admin')) {
+      return '/student';
+    }
+    
     switch (userRole) {
       case 'admin':
         return '/admin';
       case 'senior':
-        return '/senior';
+        return loginAs === 'auto' ? '/senior' : '/student';
       default:
         return '/student';
     }
@@ -121,7 +125,7 @@ export default function Login() {
     const result = await login(formData.email, formData.password);
     
     if (result.success) {
-      const redirectPath = getRedirectPath(result.user.role);
+      const redirectPath = getRedirectPath(result.user.role, formData.loginAs);
       navigate(redirectPath);
     } else {
       setError(result.message);
@@ -260,6 +264,20 @@ export default function Login() {
                   />
                 </div>
                 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Login As</label>
+                  <select
+                    name="loginAs"
+                    value={formData.loginAs}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value="auto">Default Role</option>
+                    <option value="student">Student</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Seniors can choose to login as Student to access student features</p>
+                </div>
+                
                 <button
                   type="submit"
                   disabled={loading}
@@ -330,6 +348,16 @@ export default function Login() {
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="Password"
                 />
+                
+                <select
+                  name="loginAs"
+                  value={formData.loginAs}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="auto">Default Role</option>
+                  <option value="student">Student</option>
+                </select>
                 
                 <button
                   type="submit"

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, CheckCircle, Loader } from 'lucide-react';
+import { UploadCloud, CheckCircle, Loader, AlertCircle } from 'lucide-react';
+import { projectService } from '../services/projectService';
 
 // --- MAIN COMPONENT ---
 export default function ShareProject() {
@@ -15,6 +16,7 @@ export default function ShareProject() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [error, setError] = useState('');
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,32 +25,38 @@ export default function ShareProject() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setError('');
         
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        console.log("Project Submitted:", formData);
-        setIsSubmitting(false);
-        setSubmitted(true);
-        
-        // Reset form and success message
-        setTimeout(() => {
-            setFormData({ 
-                name: "", 
-                seniorName: "",
-                description: "", 
-                domain: "", 
-                github: "",
-                deployedLink: ""
-            });
-            setSubmitted(false);
-        }, 4000);
+        try {
+            const response = await projectService.createProject(formData);
+            console.log("Project created successfully:", response);
+            
+            setSubmitted(true);
+            
+            // Reset form and success message
+            setTimeout(() => {
+                setFormData({ 
+                    name: "", 
+                    seniorName: "",
+                    description: "", 
+                    domain: "", 
+                    github: "",
+                    deployedLink: ""
+                });
+                setSubmitted(false);
+            }, 4000);
+        } catch (error) {
+            console.error('Error creating project:', error);
+            setError(error.message || 'Failed to submit project. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const domains = [
         "Web Development", "Mobile Development", "Data Science", "Machine Learning",
         "AI", "Cybersecurity", "Cloud Computing", "DevOps", "Blockchain",
-        "Game Development", "UI/UX Design"
+        "Game Development", "UI/UX Design", "IoT"
     ];
 
     // --- Animation Variants ---
@@ -170,6 +178,18 @@ export default function ShareProject() {
                                         <label htmlFor="deployedLink" className="block text-sm font-bold text-gray-700 mb-2">Deployed Project Link (Optional)</label>
                                         <input type="url" name="deployedLink" id="deployedLink" value={formData.deployedLink} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400 transition" placeholder="https://yourproject.com" />
                                     </div>
+
+                                    {/* Error Message */}
+                                    {error && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3"
+                                        >
+                                            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                                            <p className="text-red-700 text-sm">{error}</p>
+                                        </motion.div>
+                                    )}
 
                                     {/* Submit Button */}
                                     <div>

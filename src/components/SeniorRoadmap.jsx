@@ -2,18 +2,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
   BookOpen,
-  Building2,
   CheckCircle,
-  Code,
   FileText,
-  Github,
-  Lightbulb,
-  Linkedin,
+  Loader,
   Save,
   Upload,
   User,
 } from "lucide-react";
-import React, { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 // --- Configuration (Defined outside the component to prevent re-creation) ---
 const domainOptions = [
@@ -58,9 +54,52 @@ export default function ExperienceForm() {
         resume: null, // Will store the File object
     });
 
+    const [companies, setCompanies] = useState([]);
+    const [showAddCompany, setShowAddCompany] = useState(false);
+    const [newCompanyName, setNewCompanyName] = useState("");
+
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+
+    // Fetch companies on component mount
+    useEffect(() => {
+        fetchCompanies();
+    }, []);
+
+    const fetchCompanies = async () => {
+        try {
+            const response = await fetch('http://localhost:5002/api/companies');
+            const result = await response.json();
+            if (result.success) {
+                setCompanies(result.data);
+            }
+        } catch (error) {
+            console.error('Error fetching companies:', error);
+        }
+    };
+
+    const handleAddCompany = async () => {
+        if (!newCompanyName.trim()) return;
+        
+        try {
+            const response = await fetch('http://localhost:5002/api/companies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newCompanyName.trim() })
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                setCompanies(prev => [...prev, result.data].sort((a, b) => a.name.localeCompare(b.name)));
+                setFormData(prev => ({ ...prev, company: result.data.name }));
+                setNewCompanyName("");
+                setShowAddCompany(false);
+            }
+        } catch (error) {
+            console.error('Error adding company:', error);
+        }
+    };
 
     // --- Optimized Validation ---
     // isFormValid is now derived from formData on each render, not stored in state.
@@ -116,27 +155,48 @@ export default function ExperienceForm() {
         
         setIsSubmitting(true);
         
-        const dataToSubmit = {
-            ...formData,
-            company: formData.company || "Not specified",
-            advice: formData.advice || "No additional advice provided",
-            resume: formData.resume.name,
-            timestamp: new Date().toISOString(),
-            id: Date.now(),
-        };
+        try {
+            // Create FormData for file upload
+            const submitData = new FormData();
+            submitData.append('name', formData.name.trim());
+            submitData.append('company', formData.company || "Not specified");
+            submitData.append('linkedin', formData.linkedin.trim());
+            submitData.append('github', formData.github.trim());
+            submitData.append('domain', formData.domain);
+            submitData.append('technologies', formData.technologies.trim());
+            submitData.append('preparation', formData.preparation.trim());
+            submitData.append('advice', formData.advice.trim() || "No additional advice provided");
+            submitData.append('resume', formData.resume);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        console.log("Submitting Data:", dataToSubmit);
-        
-        setIsSubmitting(false);
-        setShowSuccess(true);
-        
-        setTimeout(() => {
-            setShowSuccess(false);
-            setFormData({ name: "", company: "", linkedin: "", github: "", domain: "", technologies: "", preparation: "", advice: "", resume: null });
-            setErrors({});
-        }, 5000);
+            // Submit to backend
+            const response = await fetch('http://localhost:5002/api/roadmaps/submit', {
+                method: 'POST',
+                body: submitData,
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to submit roadmap');
+            }
+
+            console.log('Roadmap submitted successfully:', result);
+            setShowSuccess(true);
+            
+            setTimeout(() => {
+                setShowSuccess(false);
+                setFormData({ name: "", company: "", linkedin: "", github: "", domain: "", technologies: "", preparation: "", advice: "", resume: null });
+                setErrors({});
+                // Reset file input
+                const fileInput = document.querySelector('input[type="file"]');
+                if (fileInput) fileInput.value = '';
+            }, 3000);
+        } catch (error) {
+            console.error('Error submitting roadmap:', error);
+            setErrors({ submit: error.message });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -153,8 +213,8 @@ export default function ExperienceForm() {
                         <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }} className="bg-white rounded-3xl shadow-2xl p-8 text-center max-w-md mx-auto">
                             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                             <h3 className="font-serif text-2xl mb-2 text-gray-900">Thank You!</h3>
-                            <p className="text-gray-600 mb-4">Your experience has been submitted.</p>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden"><motion.div className="h-full bg-green-500" animate={{ width: ["0%", "100%"] }} transition={{ duration: 5, ease: "linear" }} /></div>
+                            <p className="text-gray-600 mb-4">Your roadmap has been published successfully!</p>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden"><motion.div className="h-full bg-green-500" animate={{ width: ["0%", "100%"] }} transition={{ duration: 3, ease: "linear" }} /></div>
                         </motion.div>
                     </motion.div>
                 )}
@@ -167,12 +227,28 @@ export default function ExperienceForm() {
                 </header>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
+                    {/* Submission Error */}
+                    {errors.submit && (
+                        <motion.div variants={errorVariants} initial="hidden" animate="visible" className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
+                            <AlertCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0" />
+                            <span className="text-red-700">{errors.submit}</span>
+                        </motion.div>
+                    )}
                     {/* --- Basic Information --- */}
                     <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-white/50">
                         <h2 className="font-serif text-2xl text-gray-900 mb-6 flex items-center"><User className="w-6 h-6 mr-3 text-green-600"/>Basic Information</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <InputField name="name" label="Your Name*" value={formData.name} onChange={handleChange} error={errors.name} placeholder="e.g., Jane Doe" />
-                            <InputField name="company" label="Company (Optional)" value={formData.company} onChange={handleChange} placeholder="e.g., Google" />
+                            <CompanyDropdown 
+                                value={formData.company} 
+                                onChange={(value) => setFormData(prev => ({ ...prev, company: value }))}
+                                companies={companies}
+                                showAddCompany={showAddCompany}
+                                setShowAddCompany={setShowAddCompany}
+                                newCompanyName={newCompanyName}
+                                setNewCompanyName={setNewCompanyName}
+                                onAddCompany={handleAddCompany}
+                            />
                             <InputField name="linkedin" label="LinkedIn Profile*" value={formData.linkedin} onChange={handleChange} error={errors.linkedin} placeholder="https://linkedin.com/in/..." />
                             <InputField name="github" label="GitHub Profile*" value={formData.github} onChange={handleChange} error={errors.github} placeholder="https://github.com/..." />
                         </div>
@@ -254,4 +330,63 @@ const ErrorMessage = ({ error }) => (
             </motion.div>
         )}
     </AnimatePresence>
+);
+
+const CompanyDropdown = ({ value, onChange, companies, showAddCompany, setShowAddCompany, newCompanyName, setNewCompanyName, onAddCompany }) => (
+    <div>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Company (Optional)</label>
+        <div className="space-y-2">
+            <select 
+                value={value} 
+                onChange={(e) => {
+                    if (e.target.value === 'ADD_NEW') {
+                        setShowAddCompany(true);
+                    } else {
+                        onChange(e.target.value);
+                    }
+                }}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+            >
+                <option value="">Select a company</option>
+                {companies.map(company => (
+                    <option key={company._id} value={company.name}>{company.name}</option>
+                ))}
+                <option value="ADD_NEW">+ Add New Company</option>
+            </select>
+            
+            {showAddCompany && (
+                <motion.div 
+                    initial={{ opacity: 0, height: 0 }} 
+                    animate={{ opacity: 1, height: 'auto' }} 
+                    className="flex gap-2"
+                >
+                    <input
+                        type="text"
+                        value={newCompanyName}
+                        onChange={(e) => setNewCompanyName(e.target.value)}
+                        placeholder="Enter company name"
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500"
+                        onKeyPress={(e) => e.key === 'Enter' && onAddCompany()}
+                    />
+                    <button
+                        type="button"
+                        onClick={onAddCompany}
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                    >
+                        Add
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setShowAddCompany(false);
+                            setNewCompanyName("");
+                        }}
+                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+                    >
+                        Cancel
+                    </button>
+                </motion.div>
+            )}
+        </div>
+    </div>
 );

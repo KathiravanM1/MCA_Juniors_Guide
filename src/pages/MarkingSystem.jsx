@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Calculator, BookOpen, Award, Info, Plus } from 'lucide-react';
+import { Calculator, BookOpen, Award, Info, Plus, Trash2, Edit3, Save, User, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { studentService } from '../services/studentService';
 
 // Curriculum Data for MCA Programme (2023 Regulations)
 const mcaCurriculum = {
@@ -39,6 +40,11 @@ const AnnaUniversityMarkingSystem = () => {
   const [activeTab, setActiveTab] = useState(1);
   const [selectedSemesters, setSelectedSemesters] = useState([1]);
   const [allSemesterCourses, setAllSemesterCourses] = useState({});
+  const [studentInfo, setStudentInfo] = useState({ registration_no: '', name: '' });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const gradeOptions = useMemo(() => [
     { grade: 'O', points: 10, range: '91-100' },
@@ -51,31 +57,99 @@ const AnnaUniversityMarkingSystem = () => {
   ], []);
 
   useEffect(() => {
-    // Automatically populate Semester 1 on initial load
+    // Initialize with empty courses for Semester 1
     if (!allSemesterCourses[1]) {
-      const semesterCourses = mcaCurriculum[1].map((course, index) => ({
-        id: index + 1,
-        name: course.name,
-        credits: course.credits,
-        grade: 'A',
-        gradePoints: 8,
-      }));
-      setAllSemesterCourses(prev => ({ ...prev, 1: semesterCourses }));
+      setAllSemesterCourses(prev => ({ ...prev, 1: [] }));
     }
+    // Load existing data on mount
+    loadStudentData();
   }, []);
+
+  const loadStudentData = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await studentService.getStudentData();
+      const student = response.data;
+      
+      setStudentInfo({ registration_no: student.registration_no, name: student.name });
+      
+      // Convert student data to component format
+      const coursesData = {};
+      const selectedSems = [];
+      
+      if (student.semesters && student.semesters.length > 0) {
+        student.semesters.forEach(semester => {
+          if (semester.courses && semester.courses.length > 0) {
+            selectedSems.push(semester.semester_number);
+            coursesData[semester.semester_number] = semester.courses.map((course, index) => ({
+              id: `${semester.semester_number}-${index}`,
+              name: course.course_name,
+              code: course.course_code,
+              credits: course.credits,
+              grade: course.grade,
+              gradePoints: course.grade_points
+            }));
+          }
+        });
+        
+        setAllSemesterCourses(coursesData);
+        setSelectedSemesters(selectedSems);
+      }
+      
+    } catch (error) {
+      console.log('No existing data found, starting fresh');
+   } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveStudentData = async () => {
+    if (!studentInfo.registration_no || !studentInfo.name) {
+      setError('Please enter registration number and name');
+      return;
+    }
+    
+    try {
+      setSaving(true);
+      setError('');
+      
+      // Convert component data to API format
+      const semesters = Object.keys(allSemesterCourses)
+        .filter(sem => allSemesterCourses[sem].length > 0)
+        .map(sem => ({
+          semester_number: parseInt(sem),
+          courses: allSemesterCourses[sem].map(course => ({
+            course_code: course.code || `COURSE_${course.id}`,
+            course_name: course.name,
+            credits: course.credits,
+            grade: course.grade,
+            grade_points: course.gradePoints
+          }))
+        }));
+      
+      const studentData = {
+        registration_no: studentInfo.registration_no,
+        name: studentInfo.name,
+        semesters
+      };
+      
+      await studentService.saveStudentData(studentData);
+      setSuccess('Data saved successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+      
+    } catch (error) {
+      setError(error.message || 'Failed to save data');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleTabClick = useCallback((semester) => {
     setActiveTab(semester);
-    // Populate courses if they don't exist yet
+    // Initialize empty courses if they don't exist yet
     if (!allSemesterCourses[semester]) {
-      const semesterCourses = mcaCurriculum[semester].map((course, index) => ({
-        id: index + 1,
-        name: course.name,
-        credits: course.credits,
-        grade: 'A',
-        gradePoints: 8,
-      }));
-      setAllSemesterCourses(prev => ({ ...prev, [semester]: semesterCourses }));
+      setAllSemesterCourses(prev => ({ ...prev, [semester]: [] }));
     }
   }, [allSemesterCourses]);
 
@@ -84,16 +158,9 @@ const AnnaUniversityMarkingSystem = () => {
       setSelectedSemesters(prev => prev.filter(s => s !== semester).sort());
     } else {
       setSelectedSemesters(prev => [...prev, semester].sort());
-      // Populate courses for calculation if not already in state
+      // Initialize empty courses if not already in state
       if (!allSemesterCourses[semester]) {
-        const semesterCourses = mcaCurriculum[semester].map((course, index) => ({
-          id: index + 1,
-          name: course.name,
-          credits: course.credits,
-          grade: 'A',
-          gradePoints: 8,
-        }));
-        setAllSemesterCourses(prev => ({ ...prev, [semester]: semesterCourses }));
+        setAllSemesterCourses(prev => ({ ...prev, [semester]: [] }));
       }
     }
   }, [selectedSemesters, allSemesterCourses]);
@@ -107,6 +174,8 @@ const AnnaUniversityMarkingSystem = () => {
           if (field === 'grade') {
             const gradeData = gradeOptions.find(g => g.grade === value);
             updated.gradePoints = gradeData ? gradeData.points : 0;
+          } else if (field === 'credits') {
+            updated.credits = parseFloat(value) || 0;
           }
           return updated;
         }
@@ -114,6 +183,28 @@ const AnnaUniversityMarkingSystem = () => {
       }) || []
     }));
   }, [activeTab, gradeOptions]);
+
+  const addCourse = useCallback(() => {
+    const newCourse = {
+      id: `${activeTab}-${Date.now()}`,
+      name: 'New Subject',
+      code: '',
+      credits: 3,
+      grade: 'A',
+      gradePoints: 8,
+    };
+    setAllSemesterCourses(prev => ({
+      ...prev,
+      [activeTab]: [...(prev[activeTab] || []), newCourse]
+    }));
+  }, [activeTab]);
+
+  const removeCourse = useCallback((id) => {
+    setAllSemesterCourses(prev => ({
+      ...prev,
+      [activeTab]: prev[activeTab]?.filter(course => course.id !== id) || []
+    }));
+  }, [activeTab]);
 
   const calculateGPA = useCallback((semester) => {
     if (!allSemesterCourses[semester]) return '0.00';
@@ -353,6 +444,61 @@ const AnnaUniversityMarkingSystem = () => {
             </h2>
           </div>
           
+          {/* Student Information */}
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg" style={{ backgroundColor: '#ECFAE5' }}>
+            <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 mb-3 font-serif">
+              Student Information
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Registration Number</label>
+                <input
+                  type="text"
+                  value={studentInfo.registration_no}
+                  onChange={(e) => setStudentInfo(prev => ({ ...prev, registration_no: e.target.value }))}
+                  onBlur={(e) => loadStudentData(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16A085] text-sm"
+                  placeholder="Enter registration number"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={studentInfo.name}
+                  onChange={(e) => setStudentInfo(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16A085] text-sm"
+                  placeholder="Enter student name"
+                />
+              </div>
+            </div>
+            
+            {/* Save Button */}
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={saveStudentData}
+                disabled={saving || !studentInfo.registration_no || !studentInfo.name}
+                className="flex items-center gap-2 px-4 py-2 bg-[#16A085] text-white rounded-lg hover:bg-[#138f7a] disabled:bg-gray-400 transition-colors text-sm font-semibold"
+              >
+                <Save className="w-4 h-4" />
+                {saving ? 'Saving...' : 'Save Data'}
+              </button>
+            </div>
+            
+            {/* Messages */}
+            {error && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-500" />
+                <span className="text-red-700 text-sm">{error}</span>
+              </div>
+            )}
+            {success && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <span className="text-green-700 text-sm">{success}</span>
+              </div>
+            )}
+          </div>
+
           <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg" style={{ backgroundColor: '#DDF6D2' }}>
             <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 mb-3 font-serif">
               1. Edit Grades per Semester
@@ -370,10 +516,25 @@ const AnnaUniversityMarkingSystem = () => {
             </div>
           </div>
 
-          {displayedCourses.length > 0 && (
-            <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-              <h4 className="text-sm sm:text-base lg:text-lg font-bold text-gray-800">Editing Courses for Semester {activeTab}</h4>
-              {displayedCourses.map((course, index) => (
+          <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+            <div className="flex justify-between items-center">
+              <h4 className="text-sm sm:text-base lg:text-lg font-bold text-gray-800">Subjects for Semester {activeTab}</h4>
+              <button
+                onClick={addCourse}
+                className="flex items-center gap-2 px-3 py-2 bg-[#16A085] text-white rounded-lg hover:bg-[#138f7a] transition-colors text-xs sm:text-sm font-semibold"
+              >
+                <Plus className="w-4 h-4" />
+                Add Subject
+              </button>
+            </div>
+            
+            {displayedCourses.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm sm:text-base">No subjects added yet. Click "Add Subject" to get started.</p>
+              </div>
+            ) : (
+              displayedCourses.map((course, index) => (
                 <motion.div 
                   key={`${activeTab}-${course.id}`} 
                   className="p-3 sm:p-4 border rounded-lg animate-slide-in" 
@@ -385,19 +546,29 @@ const AnnaUniversityMarkingSystem = () => {
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                     <div className="flex-1 min-w-0">
                       <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">
-                        Course
+                        Subject Name
                       </label>
-                      <div className="w-full px-2 sm:px-3 py-2 bg-white border border-gray-300 rounded-md font-medium text-gray-800 text-xs sm:text-sm break-words">
-                        {course.name}
-                      </div>
+                      <input
+                        type="text"
+                        value={course.name}
+                        onChange={(e) => updateCourse(course.id, 'name', e.target.value)}
+                        className="w-full px-2 sm:px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16A085] text-xs sm:text-sm"
+                        placeholder="Enter subject name"
+                      />
                     </div>
                     
-                    <div className="flex gap-2 sm:gap-4">
-                      <div className="w-16 sm:w-20">
+                    <div className="flex gap-2 sm:gap-4 items-end">
+                      <div className="w-20 sm:w-24">
                         <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Credits</label>
-                        <div className="w-full px-2 sm:px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-center font-semibold font-mono text-xs sm:text-sm">
-                          {course.credits}
-                        </div>
+                        <input
+                          type="number"
+                          value={course.credits}
+                          onChange={(e) => updateCourse(course.id, 'credits', e.target.value)}
+                          min="0"
+                          max="10"
+                          step="0.5"
+                          className="w-full px-2 sm:px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#16A085] text-center font-semibold font-mono text-xs sm:text-sm"
+                        />
                       </div>
                       
                       <div className="w-16 sm:w-20">
@@ -419,12 +590,20 @@ const AnnaUniversityMarkingSystem = () => {
                           {course.gradePoints}
                         </div>
                       </div>
+                      
+                      <button
+                        onClick={() => removeCourse(course.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        title="Remove subject"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </motion.div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
           
           <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg" style={{ backgroundColor: '#ECFAE5' }}>
             <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 mb-3 font-serif">
@@ -438,12 +617,12 @@ const AnnaUniversityMarkingSystem = () => {
                     id={`sem-check-${sem}`}
                     checked={selectedSemesters.includes(sem)}
                     onChange={() => handleSemesterCheck(sem)}
-                    disabled={!allSemesterCourses[sem]}
+                    disabled={!allSemesterCourses[sem] || allSemesterCourses[sem].length === 0}
                     className="h-4 w-4 sm:h-5 sm:w-5 rounded form-checkbox"
                     style={{ borderColor: '#16A085', color: '#16A085' }}
                   />
-                  <label htmlFor={`sem-check-${sem}`} className={`ml-2 text-sm sm:text-base lg:text-lg font-bold ${!allSemesterCourses[sem] ? 'text-gray-400' : 'text-gray-800'}`}>
-                    Semester {sem}
+                  <label htmlFor={`sem-check-${sem}`} className={`ml-2 text-sm sm:text-base lg:text-lg font-bold ${!allSemesterCourses[sem] || allSemesterCourses[sem].length === 0 ? 'text-gray-400' : 'text-gray-800'}`}>
+                    Semester {sem} {allSemesterCourses[sem] && allSemesterCourses[sem].length > 0 && `(${allSemesterCourses[sem].length} subjects)`}
                   </label>
                 </div>
               ))}

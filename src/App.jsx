@@ -23,6 +23,7 @@ import AdminPanel from "./pages/AdminPanel.jsx";
 import AdminResources from "./pages/AdminResources.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import SeniorRoadmap from "./components/SeniorRoadmap.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 function App() {
   return (
@@ -32,14 +33,22 @@ function App() {
             <Route path="signup" element={<Signup />} />
             <Route path="login" element={<Login />} />
         </Route>
-        <Route path="senior" element={<SeniorLayout />} >
+        <Route path="senior" element={
+          <ProtectedRoute allowedRoles={['senior', 'admin']}>
+            <SeniorLayout />
+          </ProtectedRoute>
+        } >
             <Route index element={<SeniorLanding />} />
             <Route path="resources" element={<SeniorUploadPage />} />
             <Route path="project" element={<ShareProject/>} />
             <Route path="problemsolving" element={<PostProblemPage/>} />
             <Route path="roadmap" element={<SeniorRoadmap/>} />
         </Route>
-        <Route path="student" element={<StudentLayout />}>
+        <Route path="student" element={
+          <ProtectedRoute allowedRoles={['student', 'senior', 'admin']}>
+            <StudentLayout />
+          </ProtectedRoute>
+        }>
             <Route index element={<Student />}/>
             <Route path="resources" element={<Resources />} />
             <Route path="markingsystem" element={<AnnaUniversityMarkingSystem />} />
@@ -49,7 +58,11 @@ function App() {
             <Route path="leavetracker" element={<AttendanceTracker/>} />
             <Route path="roadmap" element={<Roadmap/>} />
         </Route>
-        <Route path="admin" element={<AdminLayout />}>
+        <Route path="admin" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }>
             <Route index element={<AdminPanel />} />
             <Route path="resources" element={<AdminResources />} />
         </Route>

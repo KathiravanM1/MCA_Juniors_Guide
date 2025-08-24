@@ -6,6 +6,7 @@ import {
   Calendar,
   ChevronRight,
   Code,
+  Download,
   ExternalLink,
   FileText,
   Filter,
@@ -31,14 +32,9 @@ import {
   Briefcase,
 } from "lucide-react";
 import React, { useState, useEffect, useMemo } from "react";
+import axios from "axios";
 
-// --- Data ---
-const experiences = [
-    { id: 1, name: "Sarah Johnson", company: "Google", domain: "frontend", technologies: "React, TypeScript, Next.js, Tailwind CSS, GraphQL, Jest, Cypress\n\nFocused on modern frontend architecture and performance optimization. Experience with micro-frontends and component libraries.", preparation: "Started with JavaScript fundamentals and React basics\nBuilt 5+ personal projects showcasing different concepts\nContributed to open source projects\nPracticed coding interviews on LeetCode (200+ problems)\nMock interviews with peers and mentors\n\nKey focus areas:\n- System design basics\n- React patterns and best practices\n- Performance optimization techniques", advice: "Focus on building real projects, not just tutorials. Contribute to open source to show collaboration skills. Practice explaining your code - communication is just as important as coding ability.", resume: "sarah-johnson-resume.pdf", timestamp: "2023-05-15", linkedin: "https://linkedin.com/in/sarah-johnson", github: "https://github.com/sarah-johnson" },
-    { id: 2, name: "Alex Chen", company: "Microsoft", domain: "backend", technologies: "Node.js, Python, PostgreSQL, Redis, Docker, Kubernetes, AWS\n\nSpecialized in scalable backend systems and microservices architecture. Experience with event-driven systems and real-time data processing.", preparation: "Studied computer science fundamentals thoroughly\nBuilt REST APIs and GraphQL services\nLearned about database design and optimization\nPracticed system design problems\nCompleted AWS certifications\n\nImportant topics:\n- Distributed systems concepts\n- Database normalization and indexing\n- Caching strategies\n- API design patterns", advice: "Understand the fundamentals deeply before jumping to frameworks. Build projects that solve real problems. Learn about scalability early - it's easier to design for scale from the beginning.", resume: "alex-chen-resume.pdf", timestamp: "2022-11-03", github: "https://github.com/alex-chen" },
-    { id: 3, name: "Maria Rodriguez", company: "Netflix", domain: "fullstack", technologies: "React, Node.js, MongoDB, Express.js, Socket.io, Redis, Docker\n\nFull-stack development with focus on real-time applications and streaming technologies. Experience with video processing and CDN optimization.", preparation: "Started with HTML/CSS/JavaScript basics\nBuilt full-stack applications from scratch\nLearned about deployment and DevOps\nStudied streaming technologies and video processing\nPracticed both frontend and backend interviews\n\nCore areas:\n- End-to-end application development\n- Real-time communication protocols\n- Video streaming technologies\n- Performance monitoring", advice: "Don't try to be expert in everything - have depth in core technologies and breadth in others. Build projects that demonstrate both frontend and backend skills. Learn deployment and monitoring early.", resume: "maria-rodriguez-resume.pdf", timestamp: "2023-02-20", linkedin: "https://linkedin.com/in/maria-rodriguez" },
-    { id: 4, name: "David Kim", company: "Amazon", domain: "mobile", technologies: "React Native, Swift, Kotlin, Firebase, Redux, AsyncStorage\n\nCross-platform mobile development with native iOS and Android experience. Focus on performance optimization and offline-first applications.", preparation: "Started with native iOS development using Swift\nLearned React Native for cross-platform development\nBuilt and published apps to App Store and Play Store\nStudied mobile-specific design patterns\nPracticed mobile system design questions\n\nKey areas:\n- Mobile UI/UX principles\n- Performance optimization for mobile\n- Offline data synchronization\n- Platform-specific features integration", advice: "Build and ship real apps to the stores - nothing beats actual user feedback. Understand platform differences deeply. Focus on performance and user experience over fancy features.", resume: "david-kim-resume.pdf", timestamp: "2022-08-10" },
-];
+const API_BASE_URL = 'http://localhost:5002/api';
 
 const domainOptions = [
     { value: "all", label: "All Domains", icon: Filter },
@@ -74,6 +70,23 @@ const EnhancedExperienceDetails = ({ experience, onBack }) => {
 
   const domainInfo = domainOptions.find((d) => d.value === experience.domain) || domainOptions[domainOptions.length - 1];
   const Icon = domainInfo.icon;
+
+  const handleResumeDownload = async (id, fileName) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/roadmaps/download/${id}`);
+      if (response.data.success) {
+        const link = document.createElement('a');
+        link.href = response.data.data.resumeUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Error downloading resume:', error);
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -117,7 +130,7 @@ const EnhancedExperienceDetails = ({ experience, onBack }) => {
         <motion.div className="bg-white/85 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-white/50 mb-8" variants={itemVariants}><h2 className="font-['Instrument_Serif'] text-2xl text-gray-900 mb-6 flex items-center"><span className={`bg-gradient-to-r ${domainInfo.color} w-10 h-10 rounded-full mr-4 flex items-center justify-center shadow-lg`}><Code className="w-5 h-5 text-white" /></span>Technologies & Skills</h2><div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-l-4 border-green-400 shadow-inner"><div className="whitespace-pre-line text-gray-700 leading-relaxed font-medium font-['Space_Grotesk']">{experience.technologies || "No technologies specified"}</div></div></motion.div>
         <motion.div className="bg-white/85 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-white/50 mb-8" variants={itemVariants}><h2 className="font-['Instrument_Serif'] text-2xl text-gray-900 mb-6 flex items-center"><span className="bg-gradient-to-r from-green-500 to-teal-500 w-10 h-10 rounded-full mr-4 flex items-center justify-center shadow-lg"><BookOpen className="w-5 h-5 text-white" /></span>Preparation Strategy</h2><div className="bg-gradient-to-br from-teal-50 to-emerald-50 p-6 rounded-xl border-l-4 border-teal-400 shadow-inner"><div className="whitespace-pre-line text-gray-700 leading-relaxed font-medium font-['Space_Grotesk']">{experience.preparation || "No preparation strategy specified"}</div></div></motion.div>
         {experience.advice && experience.advice !== "No additional advice provided" && <motion.div className="mt-8 bg-white/85 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-white/50" variants={itemVariants}><h2 className="font-['Instrument_Serif'] text-2xl text-gray-900 mb-6 flex items-center"><span className="bg-gradient-to-r from-green-500 to-amber-500 w-10 h-10 rounded-full mr-4 flex items-center justify-center shadow-lg"><Lightbulb className="w-5 h-5 text-white" /></span>Advice for Juniors</h2><div className="bg-gradient-to-br from-amber-50 to-green-50 p-6 rounded-xl border-l-4 border-amber-400 shadow-inner"><div className="whitespace-pre-line text-gray-700 leading-relaxed italic font-medium font-['Space_Grotesk']">{experience.advice}</div></div></motion.div>}
-        <motion.div className="mt-8 bg-white/85 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-white/50" variants={itemVariants}><h2 className="font-['Instrument_Serif'] text-xl text-gray-900 mb-4 flex items-center"><FileText className="w-6 h-6 mr-3 text-green-600" />Resume</h2><div className={`flex items-center bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-xl border border-green-200 transition-colors duration-300 ${experience.resume && experience.resume !== "No resume uploaded" ? "cursor-pointer hover:border-green-300" : "cursor-default"}`} onClick={() => experience.resume && experience.resume !== "No resume uploaded" && window.open(experience.resume, "_blank")}><FileText className="w-8 h-8 text-green-600 mr-4" /><span className="text-green-700 font-semibold flex-grow font-['Space_Grotesk']">{experience.resume === "No resume uploaded" || !experience.resume ? "Resume not provided" : experience.resume}</span>{experience.resume && experience.resume !== "No resume uploaded" && <ExternalLink className="w-4 h-4 text-green-600 ml-2" />}</div></motion.div>
+        <motion.div className="mt-8 bg-white/85 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-white/50" variants={itemVariants}><h2 className="font-['Instrument_Serif'] text-xl text-gray-900 mb-4 flex items-center"><FileText className="w-6 h-6 mr-3 text-green-600" />Resume</h2><div className={`flex items-center bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-xl border border-green-200 transition-colors duration-300 ${experience.resumeFileName ? "cursor-pointer hover:border-green-300" : "cursor-default"}`} onClick={() => experience.resumeUrl && handleResumeDownload(experience._id, experience.resumeFileName)}><FileText className="w-8 h-8 text-green-600 mr-4" /><span className="text-green-700 font-semibold flex-grow font-['Space_Grotesk']">{experience.resumeFileName || "Resume not provided"}</span>{experience.resumeFileName && <Download className="w-4 h-4 text-green-600 ml-2" />}</div></motion.div>
       </motion.div>
     </motion.div>
   );
@@ -152,7 +165,7 @@ const ExperienceCard = React.memo(({ experience, onSelect }) => {
                     <span className="inline-block bg-green-100 text-green-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium font-['Space_Grotesk'] truncate max-w-full">{domainInfo.label}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500 font-['Space_Grotesk'] gap-2">
-                    <div className="flex items-center min-w-0"><Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" /><span className="truncate">Posted on {formatTimestamp(experience.timestamp)}</span></div>
+                    <div className="flex items-center min-w-0"><Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" /><span className="truncate">Posted on {formatTimestamp(experience.createdAt)}</span></div>
                     <div className="flex items-center flex-shrink-0"><User className="w-3 h-3 sm:w-4 sm:h-4 mr-1" /><span className="hidden sm:inline">View Details</span></div>
                 </div>
             </div>
@@ -163,23 +176,63 @@ const ExperienceCard = React.memo(({ experience, onSelect }) => {
 
 const ExperienceListing = ({ onSelectExperience }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterDomain, setFilterDomain] = useState("all");
-  const [displayedExperiences, setDisplayedExperiences] = useState(experiences);
+  const [filterCompany, setFilterCompany] = useState("all");
+  const [displayedExperiences, setDisplayedExperiences] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchExperiences = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const params = new URLSearchParams();
+      if (filterCompany !== "all") {
+        params.append("company", filterCompany);
+      }
+      
+      const url = `${API_BASE_URL}/roadmaps/all`;
+      
+      const response = await axios.get(url);
+      
+      if (response.data.success) {
+        let data = response.data.data;
+        
+        if (searchTerm.trim()) {
+          const searchLower = searchTerm.toLowerCase();
+          data = data.filter(exp =>
+            exp.name.toLowerCase().includes(searchLower) ||
+            exp.company.toLowerCase().includes(searchLower) ||
+            exp.technologies.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        if (filterCompany !== "all") {
+          data = data.filter(exp => exp.company === filterCompany);
+        }
+        
+        setDisplayedExperiences(data);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to fetch experiences");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = () => {
-    let filtered = experiences.filter((exp) => {
-        const lowerSearchTerm = searchTerm.toLowerCase();
-        const matchesSearch = lowerSearchTerm === '' || exp.name.toLowerCase().includes(lowerSearchTerm) || exp.company.toLowerCase().includes(lowerSearchTerm);
-        const matchesDomain = filterDomain === "all" || exp.domain === filterDomain;
-        return matchesSearch && matchesDomain;
-    });
-    setDisplayedExperiences(filtered);
+    fetchExperiences();
   };
   
   useEffect(() => {
-    // Initial load and filter changes trigger search
-    handleSearch();
-  }, [filterDomain]);
+    fetchExperiences();
+  }, [filterCompany]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchExperiences();
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   return (
     <motion.div
@@ -206,27 +259,47 @@ const ExperienceListing = ({ onSelectExperience }) => {
             </div>
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <select value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)} className="w-full lg:w-auto pl-10 pr-8 py-2 sm:py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none bg-white min-w-48 font-['Space_Grotesk'] text-sm sm:text-base">
-                {domainOptions.map((option) => (<option key={option.value} value={option.value}>{option.label}</option>))}
+              <select value={filterCompany} onChange={(e) => setFilterCompany(e.target.value)} className="w-full lg:w-auto pl-10 pr-8 py-2 sm:py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none bg-white min-w-48 font-['Space_Grotesk'] text-sm sm:text-base">
+                <option value="all">All Companies</option>
+                {[...new Set(displayedExperiences.map(exp => exp.company))].sort().map((company) => (<option key={company} value={company}>{company}</option>))}
               </select>
             </div>
           </div>
         </motion.div>
 
-        <motion.div layout className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <AnimatePresence>
-            {displayedExperiences.map((experience) => (
-              <ExperienceCard key={experience.id} experience={experience} onSelect={onSelectExperience} />
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        {loading && (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+          </div>
+        )}
 
-        {displayedExperiences.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🔍</div>
-            <h3 className="text-xl text-gray-600 mb-2 font-['Instrument_Serif']">No experiences found</h3>
-            <p className="text-gray-500 font-['Space_Grotesk']">Try adjusting your search or filter criteria</p>
+        {error && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-red-50 border border-red-200 rounded-lg p-6 text-center mb-8">
+            <p className="text-red-700">{error}</p>
+            <button onClick={fetchExperiences} className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+              Try Again
+            </button>
           </motion.div>
+        )}
+
+        {!loading && !error && (
+          <>
+            <motion.div layout className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <AnimatePresence>
+                {displayedExperiences.map((experience) => (
+                  <ExperienceCard key={experience._id} experience={experience} onSelect={onSelectExperience} />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+
+            {displayedExperiences.length === 0 && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-center py-12">
+                <div className="text-gray-400 text-6xl mb-4">🔍</div>
+                <h3 className="text-xl text-gray-600 mb-2 font-['Instrument_Serif']">No experiences found</h3>
+                <p className="text-gray-500 font-['Space_Grotesk']">Try adjusting your search or filter criteria</p>
+              </motion.div>
+            )}
+          </>
         )}
       </div>
     </motion.div>

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { adminService } from '../services/adminService';
 import { 
   Users, 
   BookOpen, 
@@ -26,6 +27,53 @@ import { Link } from 'react-router-dom';
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [pendingSeniors, setPendingSeniors] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  // Fetch pending seniors on component mount
+  useEffect(() => {
+    if (activeTab === 'approvals') {
+      fetchPendingSeniors();
+    }
+  }, [activeTab]);
+
+  const fetchPendingSeniors = async () => {
+    setLoading(true);
+    const result = await adminService.getPendingSeniors();
+    if (result.success) {
+      setPendingSeniors(result.data);
+    } else {
+      setMessage('Failed to fetch pending seniors');
+    }
+    setLoading(false);
+  };
+
+  const handleApproveSenior = async (userId) => {
+    const result = await adminService.approveSenior(userId);
+    if (result.success) {
+      setMessage('Senior approved successfully!');
+      fetchPendingSeniors(); // Refresh the list
+      setTimeout(() => setMessage(''), 3000);
+    } else {
+      setMessage('Failed to approve senior');
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
+  const handleRejectSenior = async (userId) => {
+    if (window.confirm('Are you sure you want to reject this senior application?')) {
+      const result = await adminService.rejectSenior(userId);
+      if (result.success) {
+        setMessage('Senior application rejected');
+        fetchPendingSeniors(); // Refresh the list
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        setMessage('Failed to reject senior');
+        setTimeout(() => setMessage(''), 3000);
+      }
+    }
+  };
   const [users, setUsers] = useState([
     { id: 1, name: 'Rahul Sharma', email: 'rahul@example.com', role: 'junior', joinDate: '2024-01-15', status: 'active' },
     { id: 2, name: 'Priya Patel', email: 'priya@example.com', role: 'senior', joinDate: '2023-08-20', status: 'active' },
@@ -120,6 +168,7 @@ const AdminPanel = () => {
         <div className="px-3">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+            { id: 'approvals', label: 'Senior Approvals', icon: Users },
             { id: 'users', label: 'User Management', icon: Users },
             { id: 'interviews', label: 'Interview Experiences', icon: BookOpen },
             { id: 'problems', label: 'Problem Solving', icon: Brain },
@@ -187,10 +236,8 @@ const AdminPanel = () => {
           trend={12}
         />
         <StatCard 
-          title="Pending Reviews" 
-          value={interviewExperiences.filter(item => item.status === 'pending').length + 
-                problemSolutions.filter(item => item.status === 'pending').length +
-                projectGuidelines.filter(item => item.status === 'pending').length} 
+          title="Pending Approvals" 
+          value={pendingSeniors.length} 
           icon={AlertTriangle} 
           color="bg-orange-500"
         />
@@ -514,6 +561,118 @@ const AdminPanel = () => {
     </div>
   );
 
+  const SeniorApprovals = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-900" style={{fontFamily: 'Instrument Serif'}}>Senior Approvals</h1>
+        <button 
+          onClick={fetchPendingSeniors}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {message && (
+        <div className={`p-4 rounded-lg ${
+          message.includes('successfully') || message.includes('approved') 
+            ? 'bg-green-50 border border-green-200 text-green-600' 
+            : 'bg-red-50 border border-red-200 text-red-600'
+        }`}>
+          {message}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="text-2xl font-bold text-orange-600" style={{fontFamily: 'Instrument Serif'}}>
+            {pendingSeniors.length}
+          </div>
+          <div className="text-sm text-gray-600">Pending Approvals</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="text-2xl font-bold text-green-600" style={{fontFamily: 'Instrument Serif'}}>
+            {users.filter(u => u.role === 'senior' && u.status === 'active').length}
+          </div>
+          <div className="text-sm text-gray-600">Approved Seniors</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="text-2xl font-bold text-blue-600" style={{fontFamily: 'Instrument Serif'}}>
+            {users.filter(u => u.role === 'student').length}
+          </div>
+          <div className="text-sm text-gray-600">Total Students</div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-200">
+          {pendingSeniors.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No pending senior approvals
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900" style={{fontFamily: 'Space Grotesk'}}>User Details</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900" style={{fontFamily: 'Space Grotesk'}}>Registration Date</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900" style={{fontFamily: 'Space Grotesk'}}>Status</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900" style={{fontFamily: 'Space Grotesk'}}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {pendingSeniors.map((senior) => (
+                    <tr key={senior._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {senior.firstName} {senior.lastName}
+                          </div>
+                          <div className="text-sm text-gray-600">{senior.email}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {new Date(senior.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                          Pending Approval
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end space-x-2">
+                          <button 
+                            onClick={() => handleApproveSenior(senior._id)}
+                            className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                            title="Approve Senior"
+                          >
+                            Approve
+                          </button>
+                          <button 
+                            onClick={() => handleRejectSenior(senior._id)}
+                            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                            title="Reject Senior"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   const AcademicResources = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -597,6 +756,8 @@ const AdminPanel = () => {
     switch(activeTab) {
       case 'dashboard':
         return <Dashboard />;
+      case 'approvals':
+        return <SeniorApprovals />;
       case 'users':
         return <UserManagement />;
       case 'interviews':

@@ -93,6 +93,7 @@ export default function Signup() {
     role: 'student'
   });
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   
   const brandingTransition = useMemo(() => ({ duration: 0.8 }), []);
@@ -114,7 +115,12 @@ export default function Signup() {
     const result = await register(formData);
     
     if (result.success) {
-      navigate('/student');
+      if (result.requiresApproval) {
+        setSuccessMessage('Senior registration submitted successfully! Please wait for admin approval before you can login.');
+        setFormData({ email: '', password: '', firstName: '', lastName: '', role: 'student' });
+      } else {
+        navigate('/student');
+      }
     } else {
       setError(result.message || 'Registration failed');
     }
@@ -222,6 +228,12 @@ export default function Signup() {
                 {error && (
                   <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
                     {error}
+                  </div>
+                )}
+                
+                {successMessage && (
+                  <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">
+                    {successMessage}
                   </div>
                 )}
                 
@@ -336,6 +348,12 @@ export default function Signup() {
                 {error && (
                   <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded text-sm">
                     {error}
+                  </div>
+                )}
+                
+                {successMessage && (
+                  <div className="bg-green-50 border border-green-200 text-green-600 px-3 py-2 rounded text-sm">
+                    {successMessage}
                   </div>
                 )}
                 
