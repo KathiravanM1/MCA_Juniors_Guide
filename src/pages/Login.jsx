@@ -85,7 +85,7 @@ const FloatingParticles = () => {
 export default function Login() {
   const { isAuthenticated, isLoading, login, user } = useAuth();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: '', password: '', loginAs: 'auto' });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -93,17 +93,13 @@ export default function Login() {
   const titleTransition = useMemo(() => ({ delay: 0.4, duration: 0.6 }), []);
   const descTransition = useMemo(() => ({ delay: 0.6, duration: 0.6 }), []);
 
-  // Role-based redirection with login preference
-  const getRedirectPath = (userRole, loginAs = 'auto') => {
-    if (loginAs === 'student' && (userRole === 'senior' || userRole === 'admin')) {
-      return '/student';
-    }
-    
+  // Role-based redirection
+  const getRedirectPath = (userRole) => {
     switch (userRole) {
       case 'admin':
         return '/admin';
       case 'senior':
-        return loginAs === 'auto' ? '/senior' : '/student';
+        return '/senior';
       default:
         return '/student';
     }
@@ -125,7 +121,7 @@ export default function Login() {
     const result = await login(formData.email, formData.password);
     
     if (result.success) {
-      const redirectPath = getRedirectPath(result.user.role, formData.loginAs);
+      const redirectPath = getRedirectPath(result.user.role);
       navigate(redirectPath);
     } else {
       setError(result.message);
@@ -189,35 +185,34 @@ export default function Login() {
                 Your gateway to seamless digital experiences. Connect, collaborate, and create with our comprehensive platform.
               </motion.p>
               
-              <motion.div 
-                className="mt-8 xl:mt-12 grid grid-cols-3 gap-4 xl:gap-6 text-center"
+            <motion.div
+                className="mt-8 xl:mt-12"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                // transition={featuresTransition}
+                transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
               >
-                <div>
-                  <div className="w-10 h-10 xl:w-12 xl:h-12 bg-#ECFAE5 rounded-lg xl:rounded-xl flex items-center justify-center mx-auto mb-2">
-                    <svg className="w-5 h-5 xl:w-6 xl:h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
+                <div className="flex items-center justify-center gap-6 xl:gap-8 text-center text-gray-700">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 xl:w-12 xl:h-12 bg-[#ECFAE5] rounded-lg xl:rounded-xl flex items-center justify-center">
+                      {/* Icon for Seniors/Mentors */}
+                      <svg className="w-5 h-5 xl:w-6 xl:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xs xl:text-sm font-semibold font-space">By Seniors</h3>
                   </div>
-                  <h3 className="text-xs xl:text-sm font-semibold text-gray-800 font-space">Secure</h3>
-                </div>
-                <div>
-                  <div className="w-10 h-10 xl:w-12 xl:h-12 bg-#ECFAE5 rounded-lg xl:rounded-xl flex items-center justify-center mx-auto mb-2">
-                    <svg className="w-5 h-5 xl:w-6 xl:h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+
+                  <div className="text-gray-300 font-light text-2xl">/</div>
+
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 xl:w-12 xl:h-12 bg-[#ECFAE5] rounded-lg xl:rounded-xl flex items-center justify-center">
+                      {/* Icon for Juniors/Students */}
+                      <svg className="w-5 h-5 xl:w-6 xl:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3zm0 0v3m0 0v2m-3-5h6" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xs xl:text-sm font-semibold font-space">For Juniors</h3>
                   </div>
-                  <h3 className="text-xs xl:text-sm font-semibold text-gray-800 font-space">Fast</h3>
-                </div>
-                <div>
-                  <div className="w-10 h-10 xl:w-12 xl:h-12 bg-#ECFAE5 rounded-lg xl:rounded-xl flex items-center justify-center mx-auto mb-2">
-                    <svg className="w-5 h-5 xl:w-6 xl:h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xs xl:text-sm font-semibold text-gray-800 font-space">Reliable</h3>
                 </div>
               </motion.div>
             </div>
@@ -264,19 +259,7 @@ export default function Login() {
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Login As</label>
-                  <select
-                    name="loginAs"
-                    value={formData.loginAs}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    <option value="auto">Default Role</option>
-                    <option value="student">Student</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-1">Seniors can choose to login as Student to access student features</p>
-                </div>
+
                 
                 <button
                   type="submit"
@@ -349,15 +332,7 @@ export default function Login() {
                   placeholder="Password"
                 />
                 
-                <select
-                  name="loginAs"
-                  value={formData.loginAs}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  <option value="auto">Default Role</option>
-                  <option value="student">Student</option>
-                </select>
+
                 
                 <button
                   type="submit"

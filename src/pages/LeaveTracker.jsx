@@ -256,20 +256,6 @@ export default function AttendanceTracker() {
                     </p>
                 </motion.div>
 
-                {/* Stats & Form Grid */}
-                <motion.div
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="text-center mb-12 bg-white/80 backdrop-blur-sm p-8 sm:p-10 rounded-3xl shadow-lg"
-                >
-                    <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4 font-serif">
-                        Attendance Tracker
-                    </h1>
-                    <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                        {currentUser ? `Welcome ${currentUser}! Track your attendance for the current semester.` : 'Select your user ID to start tracking attendance.'}
-                    </p>
-                </motion.div>
-
 
                     {/* Form Section */}
                     <motion.div 

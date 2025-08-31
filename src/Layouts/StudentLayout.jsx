@@ -24,7 +24,7 @@ const StudentHeader = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
     
     const handleLogout = () => {
         logout();
@@ -74,6 +74,16 @@ const StudentHeader = () => {
                                         </Link>
                                     );
                                 })}
+                                {user?.role === 'senior' && (
+                                    <Link
+                                        to="/senior"
+                                        className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 text-purple-600 hover:text-purple-800 hover:bg-purple-50 border border-purple-200 font-medium"
+                                        title="🎖️ Access Senior Dashboard - Senior Privileges"
+                                    >
+                                        <GraduationCap className="w-4 h-4" />
+                                        <span className="hidden lg:inline">Senior View</span>
+                                    </Link>
+                                )}
                             </nav>
                             <div className="h-6 w-px bg-gray-300"></div>
                             <button
@@ -128,6 +138,16 @@ const StudentHeader = () => {
                                     </Link>
                                 );
                             })}
+                            {user?.role === 'senior' && (
+                                <Link
+                                    to="/senior"
+                                    onClick={() => setIsOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-purple-600 hover:text-purple-800 hover:bg-purple-50 border border-purple-200 font-medium"
+                                >
+                                    <GraduationCap className="w-5 h-5" />
+                                    🎖️ Senior View
+                                </Link>
+                            )}
                             <div className="border-t border-gray-200 pt-2 mt-2">
                                 <button
                                     onClick={handleLogout}

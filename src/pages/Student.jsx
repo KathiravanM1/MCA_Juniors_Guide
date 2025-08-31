@@ -4,68 +4,56 @@ import { ArrowRight, Star, Link as LinkIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // --- CUSTOM HOOK FOR DAILY TOPIC ---
-// This hook now uses a static list to avoid network errors from private APIs.
 const useTodaysTopic = () => {
     const [topic, setTopic] = useState({ title: 'Loading Topic...', description: 'Please wait a moment.', links: [] });
+    const [loading, setLoading] = useState(true);
 
-    // Using a static, memoized list is more reliable than a private/broken API for this component.
-    const topics = useMemo(() => [
-        { 
-            title: 'The Rise of Quantum Computing', 
-            description: 'Quantum computing leverages principles of quantum mechanics to solve problems too complex for classical computers. By using qubits, which can exist in multiple states at once, it promises to revolutionize fields like medicine, materials science, and artificial intelligence.',
+    const fetchDailyTopic = async () => {
+        const response = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
+        const storyIds = await response.json();
+        
+        const randomStoryId = storyIds[Math.floor(Math.random() * Math.min(10, storyIds.length))];
+        const storyResponse = await fetch(`https://hacker-news.firebaseio.com/v0/item/${randomStoryId}.json`);
+        const story = await storyResponse.json();
+        
+        return {
+            title: story.title,
+            description: story.text || 'Discover the latest in technology and innovation. Click the link below to read more about this trending topic.',
             links: [
-                { name: 'IBM\'s Quantum Explained', url: 'https://www.ibm.com/quantum-computing/what-is-quantum-computing/' },
-                { name: 'A Beginner\'s Guide', url: 'https://www.technologyreview.com/2019/01/29/63419/what-is-quantum-computing/' },
+                { name: 'Read Full Article', url: story.url || `https://news.ycombinator.com/item?id=${story.id}` },
+                { name: 'HackerNews Discussion', url: `https://news.ycombinator.com/item?id=${story.id}` }
             ]
-        },
-        { 
-            title: 'Ethical AI and Bias Detection', 
-            description: 'As AI becomes more integrated into our lives, ensuring it operates fairly and without bias is critical. Ethical AI involves developing systems that are transparent, accountable, and aligned with human values, actively working to identify and mitigate harmful biases in data and algorithms.',
-            links: [
-                { name: 'Google\'s AI Principles', url: 'https://ai.google/responsibility/principles/' },
-                { name: 'Understanding AI Bias', url: 'https://www.coursera.org/articles/ai-bias' },
-            ]
-        },
-        { 
-            title: 'The Future of Decentralized Finance (DeFi)', 
-            description: 'DeFi rebuilds traditional financial tools on the blockchain, creating an open and interoperable financial system. It removes intermediaries like banks, enabling peer-to-peer lending, borrowing, and trading through smart contracts.',
-            links: [
-                { name: 'Ethereum\'s DeFi Overview', url: 'https://ethereum.org/en/defi/' },
-                { name: 'DeFi Explained by Coinbase', url: 'https://www.coinbase.com/learn/crypto-basics/what-is-defi' },
-            ]
-        },
-        {
-            title: 'The Core of Web Development',
-            description: 'Understanding HTML, CSS, and JavaScript is fundamental to creating for the web. These three technologies form the backbone of virtually every website and web application.',
-            links: [
-                { name: 'MDN Web Docs', url: 'https://developer.mozilla.org/' },
-                { name: 'freeCodeCamp', url: 'https://www.freecodecamp.org/' }
-            ]
-        }
-    ], []);
+        };
+    };
 
     useEffect(() => {
-        const storedData = localStorage.getItem('todaysTopicData');
-        const now = new Date().getTime();
-        
-        if (storedData) {
-            const { topic: storedTopic, timestamp } = JSON.parse(storedData);
-            // Check if 24 hours have passed
-            if (now - timestamp < 24 * 60 * 60 * 1000) {
-                setTopic(storedTopic);
-                return;
+        const loadTopic = async () => {
+            const storedData = localStorage.getItem('todaysTopicData');
+            const now = new Date().getTime();
+            
+            if (storedData) {
+                const { topic: storedTopic, timestamp } = JSON.parse(storedData);
+                if (now - timestamp < 24 * 60 * 60 * 1000) {
+                    setTopic(storedTopic);
+                    setLoading(false);
+                    return;
+                }
             }
-        }
-        
-        // If no data or data is stale, select a new topic from the static list
-        const randomIndex = Math.floor(Math.random() * topics.length);
-        const newTopic = topics[randomIndex];
-        setTopic(newTopic);
-        localStorage.setItem('todaysTopicData', JSON.stringify({ topic: newTopic, timestamp: now }));
+            
+            try {
+                const newTopic = await fetchDailyTopic();
+                setTopic(newTopic);
+                localStorage.setItem('todaysTopicData', JSON.stringify({ topic: newTopic, timestamp: now }));
+            } catch (error) {
+                setTopic({ title: 'Unable to fetch topic', description: 'Please check your internet connection and try again.', links: [] });
+            }
+            setLoading(false);
+        };
 
-    }, [topics]);
+        loadTopic();
+    }, []);
 
-    return topic;
+    return { topic, loading };
 };
 
 
@@ -183,7 +171,7 @@ const FeatureCard = ({ feature }) => {
     );
 };
 
-const TopicOfTheDay = ({ topic }) => {
+const TopicOfTheDay = ({ topic, loading }) => {
     return (
         <motion.section 
             className="mb-12 md:mb-16"
@@ -196,38 +184,40 @@ const TopicOfTheDay = ({ topic }) => {
                     {/* Left Side: Title and Description */}
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
-                            <Star className="w-6 h-6 text-green-400"/>
+                            <Star className={`w-6 h-6 text-green-400 ${loading ? 'animate-pulse' : ''}`}/>
                             <p className="font-mono text-sm font-semibold tracking-wider uppercase text-green-400">
                                 Topic of the Day
                             </p>
                         </div>
-                        <h3 className=" font-bold text-xl sm:text-2xl lg:text-3xl xl:text-4xl">
-                            {topic.title}
+                        <h3 className="font-bold text-xl sm:text-2xl lg:text-3xl xl:text-4xl">
+                            {loading ? 'Fetching today\'s topic...' : topic.title}
                         </h3>
                         <p className="font-inter text-sm sm:text-base mt-3 opacity-80 leading-relaxed">
-                            {topic.description}
+                            {loading ? 'Getting the latest trending topic for you.' : topic.description}
                         </p>
                     </div>
 
                     {/* Right Side: Learn More Links - Stacks below on mobile */}
-                    <div className="flex-shrink-0 lg:border-l lg:border-gray-700 lg:pl-8 mt-4 sm:mt-6 lg:mt-0 pt-4 sm:pt-6 lg:pt-0 border-t border-gray-700 lg:border-t-0">
-                        <h4 className="font-space font-semibold text-base sm:text-lg mb-3">Learn More:</h4>
-                        <ul className="space-y-2">
-                            {topic.links.map((link, index) => (
-                                <li key={index}>
-                                    <a 
-                                        href={link.url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 text-xs sm:text-sm text-black-300 hover:text-gray transition-colors group"
-                                    >
-                                        <LinkIcon className="w-4 h-4 text-gray-400 group-hover:text-green-400 transition-colors" />
-                                        <span>{link.name}</span>
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    {!loading && topic.links && topic.links.length > 0 && (
+                        <div className="flex-shrink-0 lg:border-l lg:border-gray-700 lg:pl-8 mt-4 sm:mt-6 lg:mt-0 pt-4 sm:pt-6 lg:pt-0 border-t border-gray-700 lg:border-t-0">
+                            <h4 className="font-space font-semibold text-base sm:text-lg mb-3">Learn More:</h4>
+                            <ul className="space-y-2">
+                                {topic.links.map((link, index) => (
+                                    <li key={index}>
+                                        <a 
+                                            href={link.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-xs sm:text-sm text-black-300 hover:text-gray transition-colors group"
+                                        >
+                                            <LinkIcon className="w-4 h-4 text-gray-400 group-hover:text-green-400 transition-colors" />
+                                            <span>{link.name}</span>
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             </div>
         </motion.section>
@@ -238,7 +228,7 @@ const TopicOfTheDay = ({ topic }) => {
 // --- MAIN DASHBOARD COMPONENT ---
 const RedesignedDashboard = () => {
     const dashboardFeatures = useDashboardFeatures();
-    const todaysTopic = useTodaysTopic();
+    const { topic: todaysTopic, loading: topicLoading } = useTodaysTopic();
 
     return (
         <div className="min-h-screen bg-#DDF6D2">
@@ -276,7 +266,7 @@ const RedesignedDashboard = () => {
 
                 <main className="pb-16 sm:pb-20">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <TopicOfTheDay topic={todaysTopic} />
+                        <TopicOfTheDay topic={todaysTopic} loading={topicLoading} />
                         
                         <motion.div 
                             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"

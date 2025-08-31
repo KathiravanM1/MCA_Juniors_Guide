@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GraduationCap, Menu, X, Twitter, Github, Linkedin, ArrowUp, LogOut, Home, Upload, FolderOpen, Users, HelpCircle } from 'lucide-react';
+import { GraduationCap, Menu, X, Twitter, Github, Linkedin, ArrowUp, LogOut, Home, Upload, FolderOpen, Users, HelpCircle, UserCheck } from 'lucide-react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -65,6 +65,14 @@ const SeniorHeader = () => {
                                         </Link>
                                     );
                                 })}
+                                <Link
+                                    to="/student"
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-blue-200 font-medium"
+                                    title="🎓 Access Student Dashboard - View as Student"
+                                >
+                                    <UserCheck className="w-4 h-4" />
+                                    <span className="hidden lg:inline">Student View</span>
+                                </Link>
                             </nav>
                             <div className="h-6 w-px bg-gray-300"></div>
                             <button
@@ -118,6 +126,14 @@ const SeniorHeader = () => {
                                         </Link>
                                     );
                                 })}
+                                <Link
+                                    to="/student"
+                                    onClick={() => setIsOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-blue-200 font-medium"
+                                >
+                                    <UserCheck className="w-5 h-5" />
+                                    🎓 Student View
+                                </Link>
                                 <div className="border-t border-gray-200 pt-2 mt-2">
                                     <button
                                         onClick={handleLogout}
