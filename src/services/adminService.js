@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5002/api';
+const API_BASE_URL = 'https://api.vidivu.tech/api';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');

@@ -5,7 +5,7 @@ const MAX_FILE_SIZE = import.meta.env.VITE_MAX_FILE_SIZE;
 const MAX_FILES_COUNT = import.meta.env.VITE_MAX_FILES_COUNT;
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: API_URL || 'http://localhost:5002/api',
+  baseURL: API_URL || 'https://api.vidivu.tech/api',
   timeout: 30000, // 30 seconds timeout for file uploads
   headers: {
     'Content-Type': 'application/json',
